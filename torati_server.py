@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # שרת מקומי של תּוֹרָתִי - מגיש את קבצי התוכנה מהתיקייה הזו (כמו python -m http.server),
-# ובנוסף יודע לעדכן את התוכנה לגרסה חדשה בלחיצה אחת מתוך התוכנה עצמה.
+# ובנוסף יודע להוריד גרסה חדשה מתוך התוכנה עצמה ולהחיל אותה בהפעלה הבאה.
 # החידושים השמורים נמצאים בדפדפן (localStorage) ולא בקבצים האלה, ולכן העדכון לא נוגע בהם.
 # לפני כל עדכון נשמר עותק של הקבצים הישנים בתיקייה "גיבוי_גרסאות".
 
@@ -22,6 +22,8 @@ DEFAULT_UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKUP_DIR = os.path.join(APP_DIR, 'גיבוי_גרסאות')
+PENDING_DIR = os.path.join(APP_DIR, 'עדכון_ממתין')
+PENDING_INFO = os.path.join(PENDING_DIR, 'pending.json')
 ALLOWED_EXT = {'.html', '.js', '.json', '.png', '.ico', '.txt', '.md', '.py', '.bat', '.docx'}
 SAFE_NAME = re.compile(r'^[\w֐-׿][\w֐-׿ .\-]*$')
 MAX_FILE = 30 * 1024 * 1024
@@ -55,7 +57,8 @@ def current_version():
         return '0'
 
 
-def do_update(update_url):
+def download_update(update_url):
+    """מוריד את הגרסה החדשה לתיקיית המתנה. הקבצים של התוכנה עצמה לא משתנים עד ההפעלה הבאה."""
     info = json.loads(fetch(update_url).decode('utf-8'))
     version = str(info['version'])
     base = info.get('base_url') or update_url.rsplit('/', 1)[0] + '/'
@@ -63,7 +66,7 @@ def do_update(update_url):
         base += '/'
     files = info.get('files') or ['torah_app.html']
 
-    # שלב 1: מורידים הכל לזיכרון ובודקים, ורק אם הכל תקין כותבים לדיסק - כך שעדכון שנקטע לא משאיר תוכנה שבורה
+    # מורידים הכל לזיכרון ובודקים, ורק אם הכל תקין שומרים - כך שהורדה שנקטעה לא משאירה עדכון שבור
     downloaded = {}
     for entry in files:
         name = entry if isinstance(entry, str) else entry.get('name')
@@ -78,23 +81,52 @@ def do_update(update_url):
     if html is not None and ("APP_VERSION = '%s'" % version) not in html.decode('utf-8', 'replace'):
         raise ValueError('הקובץ שהורד לא תואם לגרסה %s' % version)
 
-    # שלב 2: גיבוי הקבצים הנוכחיים
+    if os.path.isdir(PENDING_DIR):
+        shutil.rmtree(PENDING_DIR, ignore_errors=True)
+    os.makedirs(PENDING_DIR, exist_ok=True)
+    for name, data in downloaded.items():
+        with open(os.path.join(PENDING_DIR, name), 'wb') as f:
+            f.write(data)
+    # pending.json נכתב אחרון: כל עוד הוא לא קיים, ההורדה לא נחשבת גמורה
+    with open(PENDING_INFO, 'w', encoding='utf-8') as f:
+        json.dump({'version': version, 'files': list(downloaded)}, f, ensure_ascii=False)
+    return {'ok': True, 'version': version}
+
+
+def pending_version():
+    try:
+        with open(PENDING_INFO, encoding='utf-8') as f:
+            return str(json.load(f)['version'])
+    except (OSError, ValueError, KeyError):
+        return None
+
+
+def apply_pending():
+    """מחיל עדכון שהורד (אם יש): גיבוי הקבצים הנוכחיים ל"גיבוי_גרסאות" ואז החלפה."""
+    try:
+        with open(PENDING_INFO, encoding='utf-8') as f:
+            info = json.load(f)
+    except (OSError, ValueError):
+        return None
+    version, names = str(info['version']), info['files']
     old = current_version()
     dest = os.path.join(BACKUP_DIR, '%s_%s' % (old, time.strftime('%Y-%m-%d_%H-%M')))
     os.makedirs(dest, exist_ok=True)
-    for name in downloaded:
+    for name in names:
+        if not safe_name(name):
+            continue
         p = os.path.join(APP_DIR, name)
         if os.path.exists(p):
             shutil.copy2(p, os.path.join(dest, name))
-
-    # שלב 3: כתיבה - קודם לקובץ זמני ואז החלפה, כדי שלא יישאר קובץ חצי-כתוב
-    for name, data in downloaded.items():
+    for name in names:
+        if not safe_name(name):
+            continue
         p = os.path.join(APP_DIR, name)
         tmp = p + '.new'
-        with open(tmp, 'wb') as f:
-            f.write(data)
+        shutil.copyfile(os.path.join(PENDING_DIR, name), tmp)
         os.replace(tmp, p)
-    return {'ok': True, 'version': version, 'old_version': old, 'files': list(downloaded)}
+    shutil.rmtree(PENDING_DIR, ignore_errors=True)
+    return {'ok': True, 'version': version, 'old_version': old}
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -127,7 +159,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if not self._local_only():
             return
         if self.path.startswith('/__torati/ping'):
-            return self._json(200, {'ok': True, 'updater': 1, 'version': current_version()})
+            return self._json(200, {'ok': True, 'updater': 2, 'version': current_version(), 'pending': pending_version()})
         return super().do_GET()
 
     def do_HEAD(self):
@@ -137,20 +169,25 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         if not self._local_only():
             return
-        if not self.path.startswith('/__torati/update'):
-            return self.send_error(404)
         # הכותרת המיוחדת מונעת מאתרים אחרים בדפדפן להפעיל עדכון בלי ידיעת המשתמש
         if self.headers.get('X-Torati') != '1':
             return self.send_error(403)
         try:
-            length = int(self.headers.get('Content-Length') or 0)
-            req = json.loads(self.rfile.read(length).decode('utf-8') or '{}') if length else {}
-            url = req.get('url') or DEFAULT_UPDATE_URL
-            if not url.startswith('https://'):
-                raise ValueError('כתובת עדכון לא חוקית')
-            result = do_update(url)
-            print('Updated to version', result['version'])
-            self._json(200, result)
+            if self.path.startswith('/__torati/download'):
+                length = int(self.headers.get('Content-Length') or 0)
+                req = json.loads(self.rfile.read(length).decode('utf-8') or '{}') if length else {}
+                url = req.get('url') or DEFAULT_UPDATE_URL
+                if not url.startswith('https://'):
+                    raise ValueError('כתובת עדכון לא חוקית')
+                result = download_update(url)
+                print('Update %s downloaded, will be applied on next start' % result['version'])
+            elif self.path.startswith('/__torati/apply'):
+                result = apply_pending() or {'ok': False, 'error': 'אין עדכון ממתין'}
+                if result.get('ok'):
+                    print('Updated to version', result['version'])
+            else:
+                return self.send_error(404)
+            self._json(200 if result.get('ok') else 409, result)
         except Exception as e:
             print('Update failed:', repr(e))
             self._json(500, {'ok': False, 'error': str(e)})
@@ -180,6 +217,13 @@ def make_server():
 
 
 if __name__ == '__main__':
+    # עדכון שהורד בפעם הקודמת מוחל עכשיו, לפני שהתוכנה נפתחת
+    try:
+        done = apply_pending()
+        if done:
+            print('Updated to version', done['version'])
+    except Exception as e:
+        print('Applying update failed:', repr(e))
     try:
         httpd = make_server()
     except OSError:

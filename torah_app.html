@@ -2904,11 +2904,12 @@ ${listText}
 // --- לוח סטטיסטיקה אישי: מסכתות/ספרים הכי נלמדים, מחברים הכי מצוטטים, וקצב כתיבה חודשי -
 // כל זה עיבוד נתונים מקומי בלבד (בלי AI), אז זה מיידי ובלי עלות.
 // --- עדכון גרסה מתוך התוכנה ---
-// פעם ביום (כשיש אינטרנט) התוכנה קוראת את קובץ הגרסה שבאינטרנט (UPDATE_URL). אם יש גרסה חדשה מופיעה הודעה,
-// ובלחיצה אחת השרת המקומי (torati_server.py) מוריד את הקבצים החדשים ומחליף אותם בתיקייה. החידושים עצמם
+// פעם ביום (כשיש אינטרנט) התוכנה קוראת את קובץ הגרסה שבאינטרנט (UPDATE_URL). אם יש גרסה חדשה מופיעה הודעה עם
+// "הורד עדכון": השרת המקומי (torati_server.py) מוריד את הקבצים לתיקיית המתנה, והם מוחלים בהפעלה הבאה של
+// התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const APP_VERSION_DATE = '11.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
@@ -2923,7 +2924,7 @@ function compareVersions(a, b) {
  return 0;
 }
 
-function initUpdates() {
+async function initUpdates() {
  const label = document.getElementById('appVersionLabel');
  if (label) label.textContent = `(גרסה ${APP_VERSION} מ-${APP_VERSION_DATE})`;
  // הודעה חד-פעמית אחרי עדכון מוצלח
@@ -2932,6 +2933,9 @@ function initUpdates() {
  localStorage.removeItem('torati_just_updated');
  if (justUpdated === APP_VERSION) setTimeout(() => alert(`התוכנה עודכנה בהצלחה לגרסה ${APP_VERSION}.\nכל החידושים שלכם נשמרו במקומם.`), 400);
  }
+ // עדכון שהורד ועוד לא הוחל (למשל אם רק הדפדפן נסגר והשרת נשאר פתוח) - מחילים עכשיו, בפתיחה
+ const local = await localUpdaterStatus();
+ if (local && local.pending && compareVersions(local.pending, APP_VERSION) > 0) { applyDownloadedUpdate(); return; }
  const last = parseInt(localStorage.getItem('torati_update_checked') || '0', 10);
  if (Date.now() - last > 20 * 60 * 60 * 1000) setTimeout(() => checkForUpdates(false), 3000);
 }
@@ -2958,6 +2962,8 @@ async function checkForUpdates(manual) {
  return;
  }
  pendingUpdateInfo = info;
+ const local = await localUpdaterStatus();
+ if (local && local.pending === String(info.version)) { showUpdateReadyBanner(info.version); if (manual) document.getElementById('settingsModal').style.display = 'none'; return; }
  if (!manual && localStorage.getItem('torati_update_snoozed') === info.version) return;
  showUpdateBanner(info);
  if (manual) document.getElementById('settingsModal').style.display = 'none';
@@ -2970,7 +2976,7 @@ function showUpdateBanner(info) {
  banner.innerHTML = `
  <span><strong>יצאה גרסה חדשה של התוכנה (${escapeHtml(String(info.version))}).</strong>${notes}</span>
  <div style="display:flex; gap:6px;">
- <button id="updateNowBtn" onclick="installUpdate()">עדכן עכשיו</button>
+ <button id="updateNowBtn" onclick="installUpdate()">⬇️ הורד עדכון</button>
  <button class="dismiss-btn" onclick="snoozeUpdate()">לא עכשיו</button>
  </div>`;
  banner.style.display = 'flex';
@@ -2981,28 +2987,33 @@ function snoozeUpdate() {
  document.getElementById('updateBanner').style.display = 'none';
 }
 
-async function localUpdaterAvailable() {
- if (location.protocol === 'file:') return false;
+// מחזיר את מצב השרת המקומי ({updater, version, pending}) או null אם התוכנה לא רצה דרכו
+async function localUpdaterStatus() {
+ if (location.protocol === 'file:') return null;
  try {
  const r = await fetch('/__torati/ping?t=' + Date.now(), { cache: 'no-store' });
- if (!r.ok) return false;
+ if (!r.ok) return null;
  const d = await r.json();
- return !!(d && d.updater);
- } catch (e) { return false; }
+ return d && d.updater >= 2 ? d : null;
+ } catch (e) { return null; }
 }
 
-async function installUpdate() {
- const info = pendingUpdateInfo;
- if (!info) return;
- const btn = document.getElementById('updateNowBtn');
- if (btn) { btn.disabled = true; btn.textContent = 'מעדכן... נא להמתין'; }
- if (await localUpdaterAvailable()) {
+function showUpdateReadyBanner(version) {
+ const banner = document.getElementById('updateBanner');
+ banner.innerHTML = `
+ <span><strong>העדכון לגרסה ${escapeHtml(String(version))} הורד.</strong> הוא יוחל בפעם הבאה שתפתחו את התוכנה.</span>
+ <div style="display:flex; gap:6px;">
+ <button id="restartNowBtn" onclick="applyDownloadedUpdate()">🔄 הפעל מחדש עכשיו</button>
+ <button class="dismiss-btn" onclick="document.getElementById('updateBanner').style.display='none'">אחר כך</button>
+ </div>`;
+ banner.style.display = 'flex';
+}
+
+async function applyDownloadedUpdate() {
+ const btn = document.getElementById('restartNowBtn');
+ if (btn) { btn.disabled = true; btn.textContent = 'מעדכן...'; }
  try {
- const r = await fetch('/__torati/update', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json', 'X-Torati': '1' },
- body: JSON.stringify({ url: UPDATE_URL })
- });
+ const r = await fetch('/__torati/apply', { method: 'POST', headers: { 'X-Torati': '1' } });
  const d = await r.json().catch(() => ({}));
  if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
  localStorage.setItem('torati_just_updated', String(d.version));
@@ -3010,8 +3021,29 @@ async function installUpdate() {
  await clearAppCacheSilently();
  location.reload();
  } catch (e) {
+ if (btn) { btn.disabled = false; btn.textContent = '🔄 הפעל מחדש עכשיו'; }
+ alert('לא הצלחנו להחיל את העדכון, והתוכנה נשארה בגרסה הקודמת (שום דבר לא נפגע).\nנסו לסגור את התוכנה ולפתוח אותה שוב.\n\nפרטים לצורך תמיכה: ' + e.message);
+ }
+}
+
+async function installUpdate() {
+ const info = pendingUpdateInfo;
+ if (!info) return;
+ const btn = document.getElementById('updateNowBtn');
+ if (btn) { btn.disabled = true; btn.textContent = 'מוריד... נא להמתין'; }
+ if (await localUpdaterStatus()) {
+ try {
+ const r = await fetch('/__torati/download', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json', 'X-Torati': '1' },
+ body: JSON.stringify({ url: UPDATE_URL })
+ });
+ const d = await r.json().catch(() => ({}));
+ if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+ showUpdateReadyBanner(d.version);
+ } catch (e) {
  if (btn) { btn.disabled = false; btn.textContent = 'נסה שוב'; }
- alert('העדכון לא הצליח, והתוכנה נשארה בגרסה הקודמת (שום דבר לא נפגע).\nנסו שוב מאוחר יותר.\n\nפרטים לצורך תמיכה: ' + e.message);
+ alert('הורדת העדכון לא הצליחה, והתוכנה נשארה בגרסה הקודמת (שום דבר לא נפגע).\nנסו שוב מאוחר יותר.\n\nפרטים לצורך תמיכה: ' + e.message);
  }
  return;
  }
@@ -3025,7 +3057,7 @@ async function installUpdate() {
  a.href = URL.createObjectURL(blob);
  a.download = 'torah_app.html';
  document.body.appendChild(a); a.click(); a.remove();
- if (btn) { btn.disabled = false; btn.textContent = 'עדכן עכשיו'; }
+ if (btn) { btn.disabled = false; btn.textContent = '⬇️ הורד עדכון'; }
  document.getElementById('genericModalTitle').textContent = 'השלמת העדכון';
  document.getElementById('genericModalContent').innerHTML = `
  <p>הקובץ החדש <strong>torah_app.html</strong> ירד למחשב (בדרך כלל לתיקיית "הורדות").</p>
