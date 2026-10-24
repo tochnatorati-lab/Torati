@@ -2,13 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
  <meta charset="UTF-8">
- <title>מנהל חידושי תורה אישי - AI</title>
+ <title>תּוֹרָתִי - מנהל חידושי תורה</title>
  <link rel="manifest" href="manifest.json">
- <meta name="theme-color" content="#2b6cb0">
+ <meta name="theme-color" content="#92400e">
  <link rel="icon" href="icon-192.png">
  <link rel="apple-touch-icon" href="icon-192.png">
  <link rel="preconnect" href="https://fonts.googleapis.com">
- <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700;900&display=swap" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
  <style>
@@ -203,6 +203,184 @@
  .chip-add-input { width: 90px; display: inline-block; padding: 3px 6px; font-size: 12px; margin: 0; }
  .chip-add-btn { width: auto; padding: 3px 8px; font-size: 11px; margin: 0; }
  .chip-remove { cursor: pointer; margin-right: 4px; }
+
+ /* ================= עיצוב 1.4.0 - שכבת עיצוב מקצועית (גוברת על הסגנון הישן) ================= */
+ :root {
+  --ui-font: 'Heebo', 'Assistant', 'Segoe UI', Tahoma, Arial, sans-serif;
+  --display-font: 'Frank Ruhl Libre', 'Narkisim', 'David', serif;
+  --radius-sm: 8px; --radius: 12px; --radius-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(60,40,15,0.06), 0 1px 3px rgba(60,40,15,0.08);
+  --shadow: 0 2px 4px rgba(60,40,15,0.04), 0 10px 30px -8px rgba(60,40,15,0.16);
+  --shadow-lg: 0 24px 60px -12px rgba(40,25,5,0.35);
+  --ink: #2a2118; --gold: #c9a227; --gold-soft: rgba(201,162,39,0.18);
+  --surface-2: #faf5ea; --line: #eadfca;
+ }
+ [data-theme="dark"] { --ink: #f1e6cf; --surface-2: #2a241e; --line: #463b30; --gold-soft: rgba(224,176,80,0.16);
+  --shadow: 0 2px 4px rgba(0,0,0,0.25), 0 12px 32px -8px rgba(0,0,0,0.55); }
+
+ html { scroll-behavior: smooth; }
+ body { font-family: var(--ui-font); padding: 0 0 40px 0; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  background-color: var(--bg-body);
+  background-image: url('bg-watermark.png'), radial-gradient(1200px 500px at 50% -120px, var(--gold-soft), transparent 70%), linear-gradient(180deg, var(--bg-body) 0%, var(--bg-body-2) 100%);
+  background-size: 520px auto, 100% 100%, cover; background-position: center 120px, top center, center; background-repeat: no-repeat; background-attachment: fixed; }
+ [data-theme="dark"] body { background-image: radial-gradient(1200px 500px at 50% -120px, var(--gold-soft), transparent 70%), linear-gradient(180deg, var(--bg-body) 0%, var(--bg-body-2) 100%); }
+ ::selection { background: var(--gold-soft); }
+
+ /* ---- כותרת עליונה ---- */
+ .header { position: relative; margin: 0 0 28px 0; padding: 18px 24px 26px; text-align: center;
+  background: linear-gradient(180deg, rgba(255,253,247,0.92), rgba(255,250,238,0.75));
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line); box-shadow: 0 6px 24px -14px rgba(60,40,15,0.35); }
+ [data-theme="dark"] .header { background: linear-gradient(180deg, rgba(40,34,28,0.95), rgba(30,26,22,0.85)); }
+ .header::after { content: ""; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 220px; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--gold), var(--accent), transparent); }
+ .header-tools { position: absolute; top: 16px; left: 20px; margin: 0; gap: 10px; }
+ .header h1 { margin: 6px 0 4px; }
+ .title-he { font-family: var(--display-font); font-size: 3.4rem; color: var(--accent-dark); letter-spacing: 1px;
+  background: linear-gradient(180deg, var(--accent-dark) 30%, var(--accent) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; padding: 0 6px; }
+ [data-theme="dark"] .title-he { background: linear-gradient(180deg, #f3d27a 20%, #c9a227 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
+ .title-en { font-size: 0.85rem; letter-spacing: 10px; margin-top: 2px; color: var(--text-muted); font-family: 'Georgia', serif; }
+ .title-accent { color: var(--accent); }
+ .title-ornament { display: inline-flex; align-items: center; gap: 6px; margin: 0 14px; opacity: 0.85; }
+ .title-ornament::before, .title-ornament::after { content: ""; display: block; height: 1px; width: 46px; background: linear-gradient(90deg, transparent, var(--accent)); }
+ .title-ornament::after { background: linear-gradient(90deg, var(--accent), transparent); }
+ .title-ornament i { display: block; width: 8px; height: 8px; transform: rotate(45deg); background: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+ .header-subtitle { margin: 6px 0 0; font-size: 1rem !important; color: var(--text-muted) !important; letter-spacing: 0.4px; }
+ .header .backup-reminder { max-width: 1200px; margin: 16px auto 0; text-align: right; }
+
+ .settings-gear { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--line); box-shadow: var(--shadow-sm); padding: 7px 14px; font-size: 13px; font-weight: 500; opacity: 1; }
+ .settings-gear:hover { border-color: var(--accent); color: var(--accent-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+ .connection-badge { padding: 5px 12px; font-weight: 500; }
+
+ /* ---- פריסה וכרטיסים ---- */
+ .container { max-width: 1320px; gap: 24px; padding: 0 20px; box-sizing: border-box; }
+ .card { padding: 26px 28px; border-radius: var(--radius-lg); border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--bg-card); position: relative; }
+ .card::before { content: ""; position: absolute; top: 0; right: 28px; left: 28px; height: 3px; border-radius: 0 0 4px 4px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.55; }
+ h2 { font-family: var(--display-font); font-weight: 700; font-size: 1.55rem; color: var(--ink); border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 18px; letter-spacing: 0.3px; }
+ [data-theme="dark"] h2 { color: #f0dca8; }
+ h2::before { content: ""; width: 10px; height: 10px; transform: rotate(45deg); background: var(--accent); border-radius: 2px; flex-shrink: 0; box-shadow: 0 0 0 4px var(--gold-soft); margin-left: 4px; }
+ h3 { font-family: var(--display-font); letter-spacing: 0.2px; }
+
+ /* ---- שדות ---- */
+ input[type="text"], input[type="password"], input[type="number"], select, textarea { border-radius: var(--radius-sm); border: 1px solid var(--line); padding: 10px 12px; font-family: var(--ui-font); transition: border-color .15s, box-shadow .15s, background .15s; }
+ input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus, textarea:focus, .rich-editor:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--gold-soft); }
+ .search-box input { border: 1px solid var(--line); padding-right: 14px; background: var(--bg-input); box-shadow: inset 0 1px 2px rgba(0,0,0,0.04); font-size: 15px; }
+ .search-box input#searchInput { padding: 12px 14px; border-radius: 999px; }
+
+ /* ---- כפתורים ---- */
+ button { font-family: var(--ui-font); font-weight: 600; letter-spacing: 0.2px; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.18); transition: transform .12s ease, box-shadow .15s ease, filter .15s ease, background .15s ease; }
+ button:not(.tab):not(.folder-tab):hover { filter: brightness(1.07) saturate(1.05); box-shadow: 0 6px 16px -6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2); transform: translateY(-1px); }
+ button:active { transform: translateY(0); filter: brightness(0.97); }
+ button:focus-visible { outline: 3px solid var(--gold-soft); outline-offset: 2px; }
+ button:not([style*="background"]):not(.tab):not(.folder-tab):not(.btn-soft):not(.btn-secondary):not(.dismiss-btn):not(.modal-close-btn) { background-image: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(0,0,0,0.06)); }
+ .btn-soft, .btn-secondary { width: auto !important; margin: 0 !important; padding: 7px 14px !important; font-size: 13px !important; background: var(--bg-card) !important; color: var(--text-main) !important; border: 1px solid var(--line) !important; box-shadow: var(--shadow-sm) !important; }
+ .btn-soft:hover, .btn-secondary:hover { border-color: var(--accent) !important; color: var(--accent-dark) !important; filter: none !important; }
+ .btn-danger-soft:hover { border-color: #c53030 !important; color: #c53030 !important; }
+ .modal-close-btn { background: transparent !important; color: var(--text-muted) !important; border: 1px solid var(--line) !important; box-shadow: none !important; font-size: 12px; border-radius: 999px; }
+ .modal-close-btn:hover { color: #c53030 !important; border-color: #c53030 !important; }
+
+ /* ---- לשוניות (מקטעים) ---- */
+ .tabs { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 5px; gap: 4px; margin: 16px 0 18px; }
+ .tab, [data-theme="dark"] .tab { background: transparent; color: var(--text-muted); border-radius: 10px; padding: 10px 8px; font-size: 13.5px; font-weight: 600; box-shadow: none; margin: 0; transition: background .15s, color .15s, box-shadow .15s; }
+ .tab:hover { background: rgba(0,0,0,0.035); color: var(--text-main); }
+ .tab.active { background: var(--bg-card); color: var(--accent-dark); box-shadow: var(--shadow-sm), 0 0 0 1px var(--line); }
+ [data-theme="dark"] .tab.active { background: var(--bg-input); color: #f0c040; }
+
+ /* ---- תיקיות הספרייה ---- */
+ .library-toolbar { display: flex; justify-content: flex-start; margin-bottom: 12px; }
+ .folder-tab { width: auto !important; margin: 0 !important; padding: 10px 16px 10px 12px !important; font-size: 14px !important; font-weight: 600; border-radius: 12px !important;
+  background: var(--bg-card) !important; color: var(--text-main) !important; border: 1px solid var(--line) !important; box-shadow: var(--shadow-sm) !important;
+  display: inline-flex; align-items: center; gap: 8px; position: relative; }
+ .folder-tab::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--folder-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--folder-color) 18%, transparent); }
+ .folder-tab:hover { border-color: var(--folder-color) !important; transform: translateY(-1px); }
+ .folder-tab.active { background: var(--folder-color) !important; color: #fff !important; border-color: var(--folder-color) !important; box-shadow: 0 8px 20px -8px var(--folder-color) !important; }
+ .folder-tab.active::before { background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,0.3); }
+ .folder-count { font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-muted); }
+ .folder-tab.active .folder-count { background: rgba(255,255,255,0.22); color: #fff; }
+ .custom-folder-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: -4px 0 14px; padding: 10px 14px; border-radius: var(--radius); background: var(--surface-2); border: 1px dashed var(--line); font-size: 13px; }
+ .custom-folder-bar span { flex: 1; }
+ .empty-state { text-align: center; padding: 34px 20px; color: var(--text-muted); background: var(--surface-2); border-radius: var(--radius); border: 1px dashed var(--line); }
+ .empty-state-icon { font-size: 38px; margin-bottom: 6px; opacity: 0.8; }
+
+ /* ---- צ'יפים ותגיות ---- */
+ .type-chip { padding: 6px 13px; border-radius: 999px; font-weight: 600; transition: all .15s; background: var(--bg-card); box-shadow: var(--shadow-sm); }
+ .type-chip:hover { border-color: var(--accent); color: var(--accent-dark); transform: translateY(-1px); }
+ .type-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 6px 14px -6px var(--accent); }
+ .tag { padding: 3px 10px; border-radius: 999px; font-weight: 600; font-size: 11.5px; border: 1px solid rgba(0,0,0,0.05); }
+ #librarySection [style*="background:#fdf8ef"], #librarySection [style*="background:#f7f1e3"] { background: var(--surface-2) !important; border: 1px solid var(--line); border-radius: var(--radius) !important; }
+
+ /* ---- רשימת חידושים ---- */
+ .note-row { border-radius: var(--radius); margin-top: 9px; border: 1px solid var(--line); box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
+ .note-row::before { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 3px; background: var(--accent); opacity: 0; transition: opacity .15s; }
+ .note-row:hover { background: var(--bg-card); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: var(--shadow); transform: translateY(-1px); }
+ .note-row:hover::before, .note-row.open::before { opacity: 1; }
+ .note-row-header { padding: 12px 16px; }
+ .note-row-preview { font-size: 14.5px; color: var(--text-main); }
+ .note-full { padding: 2px 18px 16px; line-height: 1.85; }
+ .stats-bar { font-size: 13px; }
+ .stats-bar b { color: var(--accent-dark); font-size: 15px; }
+
+ /* ---- עורך ---- */
+ .editor-toolbar { background: var(--surface-2); border-color: var(--line); border-radius: var(--radius) var(--radius) 0 0; padding: 8px; gap: 5px; }
+ .editor-toolbar button { border-radius: 8px; border-color: var(--line); box-shadow: none; background: var(--bg-card); color: var(--text-main); }
+ .editor-toolbar button:hover { background: var(--bg-chip); transform: none; box-shadow: none; filter: none; }
+ .rich-editor { border-color: var(--line); border-radius: 0 0 var(--radius) var(--radius); font-size: 16px; line-height: 1.8; padding: 16px 18px; font-family: var(--display-font); min-height: 180px; }
+
+ /* ---- התראות ---- */
+ .backup-reminder { border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 12px 16px; }
+ .backup-reminder button { border-radius: 8px; }
+
+ /* ---- חלונות ---- */
+ .modal-overlay { background: rgba(30,22,12,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+ .modal-box { border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--line); padding: 30px; animation: modal-in .22s cubic-bezier(.2,.8,.2,1); }
+ @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: none; } }
+ .modal-box h3 { font-size: 1.35rem; color: var(--ink) !important; }
+ [data-theme="dark"] .modal-box h3 { color: #f0dca8 !important; }
+ .settings-item { padding: 12px 14px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--line); margin-bottom: 10px; }
+ .settings-divider { margin: 6px 0 14px; border-top-color: var(--line); }
+ .settings-row-label { color: var(--text-main); font-weight: 600; }
+
+ /* ---- גלילה ---- */
+ * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 45%, transparent) transparent; }
+ ::-webkit-scrollbar { width: 10px; height: 10px; }
+ ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+ ::-webkit-scrollbar-thumb:hover { background-color: var(--accent); }
+
+ .loading { padding: 10px; border-radius: var(--radius); background: var(--gold-soft); color: var(--accent-dark); }
+ .card, .header { animation: fade-up .35s ease both; }
+ #librarySection { animation-delay: .06s; }
+ @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+ @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+
+ /* ---- כפתורי פעולה וייבוא (1.4.0) ---- */
+ .action-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+ .action-row button { width: auto; margin: 0; padding: 10px 22px; font-size: 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; }
+ .action-primary { background: linear-gradient(135deg, var(--accent), var(--accent-dark)) !important; color: #fff; box-shadow: 0 6px 16px -8px var(--accent) !important; }
+ .action-secondary { background: var(--bg-card) !important; color: var(--text-main) !important; border: 1px solid var(--line) !important; box-shadow: var(--shadow-sm) !important; }
+ .action-secondary:hover { border-color: var(--accent) !important; color: var(--accent-dark) !important; filter: none !important; }
+ .action-ico { font-size: 13px; opacity: 0.9; }
+ .import-title { font-family: var(--display-font); font-weight: 700; font-size: 1.05rem; color: var(--ink); margin-bottom: 10px; }
+ [data-theme="dark"] .import-title { color: #f0dca8; }
+ .import-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+ .import-tile { width: 100%; margin: 0; padding: 12px 14px; display: flex; align-items: center; gap: 12px; text-align: right;
+  background: var(--surface-2) !important; color: var(--text-main) !important; border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--line)) !important; border-radius: var(--radius) !important; box-shadow: none !important; font-weight: 500; }
+ .import-tile:hover { background: var(--bg-card) !important; border-style: solid !important; border-color: var(--accent) !important; filter: none !important; box-shadow: var(--shadow-sm) !important; }
+ .import-tile-ico { font-size: 22px; width: 38px; height: 38px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--gold-soft); }
+ .import-tile-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.3; }
+ .import-tile-text b { font-size: 13.5px; }
+ .import-tile-text small { font-size: 11.5px; color: var(--text-muted); font-weight: 400; }
+ #verifyRefsBtn, #phase2Wrapper > button, #phase3Wrapper > button, #resultBox .save-btn, #batchSaveBtn { width: auto; padding: 9px 20px; font-size: 13.5px; border-radius: 999px; }
+ #resultBox .save-btn { padding: 10px 26px; font-size: 14px; background: linear-gradient(135deg, #38a169, #2f855a); }
+ @media (max-width: 520px) { .import-tiles { grid-template-columns: 1fr; } .action-row button { flex: 1; justify-content: center; } }
+ @media (max-width: 768px) {
+  .header { padding: 54px 14px 20px; }
+  .header-tools { left: 12px; top: 12px; }
+  .title-he { font-size: 2.6rem; }
+  .title-ornament::before, .title-ornament::after { width: 22px; }
+  .container { padding: 0 12px; }
+  .card { padding: 20px 16px; min-width: 0; flex-basis: 100%; }
+ }
  </style>
 </head>
 <body>
@@ -213,7 +391,7 @@
  <span id="settingsGear" class="settings-gear" onclick="document.getElementById('settingsModal').style.display='block';" title="הגדרות">⚙️ הגדרות</span>
  </div>
  <h1>
- <div class="title-row"><span class="title-flourish">📜</span> <span class="title-he">תּוֹרָתִי</span> <span class="title-flourish">📜</span></div>
+ <div class="title-row"><span class="title-ornament"><i></i></span><span class="title-he">תּוֹרָתִי</span><span class="title-ornament"><i></i></span></div>
  <div class="title-en">TOR<span class="title-accent">A</span>T<span class="title-accent">I</span></div>
  </h1>
  <p class="header-subtitle">איסוף, סיווג וחיפוש חידושים לפי מקור, מחבר ונושא</p>
@@ -253,11 +431,17 @@
  <div class="settings-row">
  <span class="settings-row-label">מפתח API <span id="apiBoxStatus" style="font-size:11px; color:#38a169; font-weight:bold; display:none;">✓ מוגדר</span></span>
  <span class="settings-row-control">
- <input type="password" id="apiKey" placeholder="הדבק כאן מפתח" style="width:150px;" onchange="localStorage.setItem('gemini_key', this.value); updateApiBoxStatus();">
+ <input type="password" id="apiKey" placeholder="הדבק כאן מפתח" style="width:150px;" onchange="localStorage.setItem('gemini_key', this.value.trim()); updateApiBoxStatus();">
  <button type="button" id="toggleKeyBtn" onclick="toggleKeyVisibility()" style="width:auto; padding:6px 10px; margin:0; font-size:12px;">הצג</button>
  </span>
  </div>
- <p class="settings-row-note">המפתח נשמר רק במחשב שלך (בדפדפן), ולא נשלח לשום מקום חוץ מ-Google.</p>
+ <div class="settings-row" style="margin-top:8px;">
+ <span class="settings-row-label">מפתח API נוסף (רשות) <span id="apiBoxStatus2" style="font-size:11px; color:#38a169; font-weight:bold; display:none;">✓ מוגדר</span></span>
+ <span class="settings-row-control">
+ <input type="password" id="apiKey2" placeholder="מפתח שני - לגיבוי" style="width:150px;" onchange="localStorage.setItem('gemini_key2', this.value.trim()); updateApiBoxStatus();">
+ </span>
+ </div>
+ <p class="settings-row-note">המפתחות נשמרים רק במחשב שלך (בדפדפן), ולא נשלחים לשום מקום חוץ מ-Google. אם יש עומס על מפתח אחד, התוכנה עוברת אוטומטית למפתח השני.</p>
  </div>
 
  <div class="settings-item">
@@ -425,8 +609,10 @@
  <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#6b5b4b; margin-top:10px; cursor:pointer;">
  <input type="checkbox" id="deepAnalysisToggle" style="width:auto; margin:0;">ניתוח מעמיק (איטי יותר - כולל גם חיפוש מיקום מדויק אוטומטית; ניתוח רגיל נשאר קריאה אחת פשוטה)
  </label>
- <button onclick="analyzeText()">1. סרוק ונתח באמצעות AI</button>
- <button class="draft-btn" onclick="saveDraft()">שמור כטיוטה מהירה</button>
+ <div class="action-row">
+ <button class="action-primary" onclick="analyzeText()"><span class="action-ico">✦</span> נתח וזהה מקורות</button>
+ <button class="action-secondary" onclick="saveDraft()"><span class="action-ico">✎</span> שמור כטיוטה</button>
+ </div>
  <div id="loading" class="loading">אנא המתן, התוכנה מעיינת ומנתחת...</div>
 
  <div id="resultBox" style="display:none; margin-top: 15px;">
@@ -468,12 +654,18 @@
  </div>
 
  <hr style="margin: 20px 0; border: none; border-top: 1px solid #f3e8d3;">
- <h3>ייבוא קובץ Word</h3>
- <button class="word-btn" onclick="document.getElementById('wordInput').click()">טען קובץ Word לניתוח</button>
+ <div class="import-title">ייבוא מקובץ Word</div>
+ <div class="import-tiles">
+ <button type="button" class="import-tile" onclick="document.getElementById('wordInput').click()">
+ <span class="import-tile-ico">📄</span><span class="import-tile-text"><b>קובץ אחד</b><small>טעינה וניתוח של קובץ Word</small></span>
+ </button>
+ <button type="button" class="import-tile" onclick="document.getElementById('wordMultiInput').click()">
+ <span class="import-tile-ico">🗂️</span><span class="import-tile-text"><b>כמה קבצים</b><small>ניתוח של כמה קבצים ברצף</small></span>
+ </button>
+ </div>
  <input type="file" id="wordInput" style="display:none" accept=".docx" onchange="importWord(event)">
  <div id="wordStatus" class="import-status"></div>
 
- <button class="word-btn" onclick="document.getElementById('wordMultiInput').click()" style="margin-top:8px;">טען כמה קבצי Word בבת אחת</button>
  <input type="file" id="wordMultiInput" style="display:none" accept=".docx" multiple onchange="handleMultiWordSelect(event)">
  <div id="wordQueuePanel" style="display:none; margin-top:10px;">
  <div style="font-size:13px; font-weight:bold; color:#4a5568; margin-bottom:6px;">קבצים שנבחרו (מעובדים אוטומטית, כולם, בלי תלות בסדר):</div>
@@ -884,15 +1076,71 @@ let libraryFolderMap = Object.assign(
 );
 function saveLibraryFolders() { localStorage.setItem('library_folders', JSON.stringify(libraryFolders)); }
 function saveLibraryFolderMap() { localStorage.setItem('library_folder_map', JSON.stringify(libraryFolderMap)); }
-function addLibraryFolder() {
- const name = prompt('שם תיקייה נוספת, מעבר לחמש הקבועות (למשל: ספרי שו"ת):');
+const BUILTIN_LIBRARY_FOLDERS = ['ש"ס', 'משנה', 'הלכה', 'ראשונים', 'אחרונים', 'לא משויך'];
+// חלונית קלט פנימית במקום prompt() של הדפדפן - חלק מהדפדפנים/חלונות (התקנה כאפליקציה, אוצריא)
+// חוסמים את prompt() בשקט, ואז "הוסף תיקייה" פשוט לא עשה כלום
+function askTextDialog(title, defaultValue, placeholder) {
+ return new Promise(resolve => {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'block';
+  overlay.style.zIndex = '2000';
+  overlay.innerHTML = `<div class="modal-box ask-dialog" style="max-width:420px;">
+   <h3 style="margin-top:0;">${escapeHtml(title)}</h3>
+   <input type="text" class="ask-dialog-input" placeholder="${escapeHtml(placeholder || '')}" style="margin-bottom:14px;">
+   <div style="display:flex; gap:8px; justify-content:flex-start;">
+    <button type="button" class="ask-ok" style="width:auto; margin:0; padding:8px 22px;">אישור</button>
+    <button type="button" class="ask-cancel btn-secondary" style="width:auto; margin:0; padding:8px 18px;">ביטול</button>
+   </div></div>`;
+  document.body.appendChild(overlay);
+  const input = overlay.querySelector('.ask-dialog-input');
+  input.value = defaultValue || '';
+  const close = val => { overlay.remove(); resolve(val); };
+  overlay.querySelector('.ask-ok').onclick = () => close(input.value);
+  overlay.querySelector('.ask-cancel').onclick = () => close(null);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(null); });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') close(input.value); if (e.key === 'Escape') close(null); });
+  setTimeout(() => { input.focus(); input.select(); }, 30);
+ });
+}
+async function addLibraryFolder() {
+ const name = await askTextDialog('הוספת תיקייה חדשה', '', 'למשל: ספרי שו"ת');
  if (!name || !name.trim()) return;
- if (!libraryFolders.includes(name.trim())) { libraryFolders.push(name.trim()); saveLibraryFolders(); }
+ const trimmed = name.trim();
+ if (BUILTIN_LIBRARY_FOLDERS.includes(trimmed)) { alert(`התיקייה "${trimmed}" כבר קיימת.`); return; }
+ if (!libraryFolders.includes(trimmed)) { libraryFolders.push(trimmed); saveLibraryFolders(); }
+ // פותחים מיד את התיקייה החדשה (גם כשהיא עדיין ריקה) כדי שיהיה ברור שהיא נוספה
+ activeLibraryFolder = trimmed;
+ activeLibraryItem = null;
+ activeLibraryDaf = null;
+ renderLibrary();
+}
+async function renameLibraryFolder(oldName) {
+ const name = await askTextDialog(`שם חדש לתיקייה "${oldName}"`, oldName);
+ if (!name || !name.trim() || name.trim() === oldName) return;
+ const trimmed = name.trim();
+ if (BUILTIN_LIBRARY_FOLDERS.includes(trimmed) || libraryFolders.includes(trimmed)) { alert(`כבר יש תיקייה בשם "${trimmed}".`); return; }
+ libraryFolders = libraryFolders.map(f => f === oldName ? trimmed : f);
+ Object.keys(libraryFolderMap).forEach(k => { if (libraryFolderMap[k] === oldName) libraryFolderMap[k] = trimmed; });
+ saveLibraryFolders(); saveLibraryFolderMap();
+ if (activeLibraryFolder === oldName) activeLibraryFolder = trimmed;
+ renderLibrary();
+}
+function deleteLibraryFolder(name) {
+ if (!confirm(`למחוק את התיקייה "${name}"? החידושים לא יימחקו - הפריטים שבה יחזרו לסיווג האוטומטי.`)) return;
+ libraryFolders = libraryFolders.filter(f => f !== name);
+ Object.keys(libraryFolderMap).forEach(k => { if (libraryFolderMap[k] === name) delete libraryFolderMap[k]; });
+ saveLibraryFolders(); saveLibraryFolderMap();
+ if (activeLibraryFolder === name) activeLibraryFolder = null;
  renderLibrary();
 }
 function assignLibraryFolder(itemName, folderName) {
  libraryFolderMap[itemName] = folderName;
  saveLibraryFolderMap();
+ // עוברים יחד עם הפריט לתיקייה החדשה, כדי שיהיה ברור שהשיוך הצליח
+ activeLibraryFolder = folderName;
+ activeLibraryItem = itemName;
+ activeLibraryDaf = null;
  renderLibrary();
 }
 
@@ -960,8 +1208,8 @@ const RAMBAM_HILCHOT_HEB_TO_EN = {
 };
 
 // --- רשימות מוכרות לזיהוי אוטומטי (ניחוש התחלתי, תמיד ניתן לשינוי ידני) של תקופת מחבר/סוג ספר ---
-const RISHONIM_NAMES = ["רש\"י","רש''י","תוספות","תוס'","תוס׳","רמב\"ם","רמב''ם","רמב\"ן","רמב''ן","ראב\"ד","ראב''ד","ר\"ן","ר''ן","ריטב\"א","ריטב''א","רשב\"א","רשב''א","ריב\"ש","ריב''ש","רי\"ף","רי''ף","רא\"ש","רא''ש","מאירי","רבנו תם","רבינו תם","רבנו גרשום","רבינו גרשום","אבן עזרא","אבן־עזרא","רד\"ק","רד''ק","ספורנו","חזקוני","סמ\"ג","סמ''ג","סמ\"ק","סמ''ק","מרדכי","אור זרוע","או\"ז","שיטה מקובצת","בעל המאור","מלחמות ה'","תוספות רי\"ד","רוקח","ראבי\"ה","רבנו יונה","רבינו יונה","העיטור","יראים","רמב\"ם"];
-const ACHARONIM_NAMES = ["ש\"ך","ש''ך","ט\"ז","ט''ז","מגן אברהם","מ\"א","גר\"א","הגר\"א","הגר''א","חתם סופר","חת\"ם סופר","נודע ביהודה","נוב\"י","פני יהושע","פנ\"י","קצות החושן","קצוה\"ח","נתיבות המשפט","נתיבו\"מ","שאגת אריה","ערוך השולחן","ערוה\"ש","חזון איש","חזו\"א","אגרות משה","אג\"מ","ציץ אליעזר","מנחת חינוך","אבני מילואים","בית מאיר","חכם צבי","חכ\"צ","יעב\"ץ","פרי מגדים","פמ\"ג","שולחן ערוך הרב","בית שמואל","חלקת מחוקק","ביאור הגר\"א","ערוך לנר","בן איש חי","כף החיים","מהרש\"א","מהרש''א","מהר\"ם","מהרי\"ל","של\"ה","של''ה","אור החיים","אוה\"ח","נפש החיים","אבני נזר","בית הלוי","שם משמעון","דבר אברהם","אגלי טל","חתם איש"];
+const RISHONIM_NAMES = ["רש\"י","רש''י","תוספות","תוס'","תוס׳","רמב\"ם","רמב''ם","רמב\"ן","רמב''ן","ראב\"ד","ראב''ד","ר\"ן","ר''ן","ריטב\"א","ריטב''א","רשב\"א","רשב''א","ריב\"ש","ריב''ש","רי\"ף","רי''ף","רא\"ש","רא''ש","מאירי","רבנו תם","רבינו תם","רבנו גרשום","רבינו גרשום","אבן עזרא","אבן־עזרא","רד\"ק","רד''ק","ספורנו","חזקוני","סמ\"ג","סמ''ג","סמ\"ק","סמ''ק","מרדכי","אור זרוע","או\"ז","שיטה מקובצת","בעל המאור","מלחמות ה'","תוספות רי\"ד","רוקח","ראבי\"ה","רבנו יונה","רבינו יונה","העיטור","יראים","רמב\"ם","רשב\"ם","רשב''ם","רבנו חננאל","רבינו חננאל","רבנו תם","ריב\"א","רי\"ד","תוספות ישנים","תוס' ישנים","רא\"ה","נמוקי יוסף","נימוקי יוסף","נמו\"י","ר\"ן","רבנו ירוחם","בעל הטורים","ארחות חיים","מכתם","רבנו בחיי","רבינו בחיי","רלב\"ג","אברבנאל","אברבנל","ספר החינוך","רע\"ב","ברטנורא","מגיד משנה","הגהות מיימוניות","רבנו אפרים","ראבי\"ה","ראב\"ן","שבלי הלקט","תשב\"ץ","מהרי\"ק","מהר\"ם מרוטנבורג","רשב\"ץ","ר\"ש משאנץ","הטור","ארבעה טורים","רבנו פרץ","מאירי","רמ\"ה","יד רמ\"ה","ריא\"ז","רי\"ד","רבנו שמשון","ר\"י מיגש","ר\"י מגאש","רי\"מ","תוספות הרא\"ש","תוספות שאנץ","ספר התרומה","הגהות אשר\"י","רמ\"ך",];
+const ACHARONIM_NAMES = ["ש\"ך","ש''ך","ט\"ז","ט''ז","מגן אברהם","מ\"א","גר\"א","הגר\"א","הגר''א","חתם סופר","חת\"ם סופר","נודע ביהודה","נוב\"י","פני יהושע","פנ\"י","קצות החושן","קצוה\"ח","נתיבות המשפט","נתיבו\"מ","שאגת אריה","ערוך השולחן","ערוה\"ש","חזון איש","חזו\"א","אגרות משה","אג\"מ","ציץ אליעזר","מנחת חינוך","אבני מילואים","בית מאיר","חכם צבי","חכ\"צ","יעב\"ץ","פרי מגדים","פמ\"ג","שולחן ערוך הרב","בית שמואל","חלקת מחוקק","ביאור הגר\"א","ערוך לנר","בן איש חי","כף החיים","מהרש\"א","מהרש''א","מהר\"ם","מהרי\"ל","של\"ה","של''ה","אור החיים","אוה\"ח","נפש החיים","אבני נזר","בית הלוי","שם משמעון","דבר אברהם","אגלי טל","חתם איש","רמ\"א","רמ''א","משנה ברורה","מ\"ב","ביאור הלכה","שער הציון","מהרש\"ל","ים של שלמה","מהר\"ל","ב\"ח","בית חדש","פרישה","דרישה","סמ\"ע","תוספות יו\"ט","לבוש","עולת שבת","אליה רבה","מחצית השקל","חיי אדם","חכמת אדם","קיצור שולחן ערוך","שערי תשובה","באר היטב","פתחי תשובה","ט\"ז","מגן אברהם","רעק\"א","רבי עקיבא איגר","ר\"ע איגר","רע\"א","גליון הש\"ס","צל\"ח","מהר\"ץ חיות","רש\"ש","חידושי הרי\"ם","שפת אמת","שפ\"א","בית יעקב","קהלות יעקב","חזו\"א","אחיעזר","אור שמח","משך חכמה","קובץ שיעורים","קובץ הערות","ברכת שמואל","שערי יושר","רבי חיים","ר\"ח הלוי","חידושי ר\"ח","גר\"ח","בריסק","אבי עזרי","אמרי משה","חלקת יואב","רדב\"ז","מבי\"ט","מהרשד\"ם","מהרי\"ט","כנסת הגדולה","פני משה","קרבן העדה","תפארת ישראל","מלבי\"ם","מלבים","כלי יקר","אור החיים","נצי\"ב","העמק דבר","העמק שאלה","משיב דבר","שואל ומשיב","מנחת יצחק","יביע אומר","יחוה דעת","שבט הלוי","מנחת שלמה","מנחת אשר","אבן האזל","חידושי הגר\"ח","ערוך השלחן","יד אברהם","בית הלל","שו\"ת הרשב\"א","מקור חיים","תורת חיים","מגיני שלמה","פני שלמה","רבנו עקיבא איגר","אילת השחר","טל תורה","חשק שלמה","שיעורי רבי שמואל","ר\"ש שקאפ","רבי שמעון שקאפ","קונטרסי שיעורים","דברות משה","משמרות כהונה","אמרי בינה","תורת כהנים","נתיבות","קצות","מקנה","ערוך לנר","שב שמעתתא","פלתי","תבואות שור","כרתי ופלתי","פרי חדש","מגן גבורים","משנה למלך","לחם משנה","מרכבת המשנה","אור שמח","שער המלך","שערי ישר","מנחת חינוך","תוספות יום טוב","בית יוסף","כסף משנה","לחם משנה","גרי\"ז","הגרי\"ז","סטייפלר","הרב שך","הגרא\"מ שך","רבי נחום","ר' נחום","גרש\"ז","הגרש\"ז","רבי ברוך בער","ר' ברוך בער","ר' שמעון","רבי אלחנן","ר' אלחנן","הגר\"ח","גר\"ח","טורי אבן","תוספות רעק\"א","חתם סופר","הפלאה","הפלא\"ה","מצפה איתן","שיטה לא נודע למי"];
 
 // סדר כרונולוגי גס (לא מדויק לשנה, רק יחסי) לצורך מיון נעים יותר בתוך כל תקופה - במקום אלפביתי גרידא.
 // שמות שלא ברשימה יופיעו בסוף, ממוינים אלפביתית.
@@ -979,24 +1227,33 @@ function getAuthorChronoRank(name) {
 const HALACHA_SEFARIM_NAMES = ["שולחן ערוך","שו\"ע","שו''ע","קיצור שולחן ערוך","קש\"ע","משנה ברורה","ערוך השולחן","ערוה\"ש","משנה תורה","טור","לבוש","חיי אדם","כף החיים","ילקוט יוסף","פסקי תשובות"];
 
 // מנחש לאיזו תקופה שייך שם מחבר (לפי רשימת שמות מוכרים) - ניחוש התחלתי בלבד, ניתן תמיד לשינוי ידני
+// ההתאמה הארוכה ביותר מנצחת - כדי ש"תוספות יום טוב" או "מנחת חינוך" לא ייתפסו כראשונים רק בגלל
+// שהם מכילים את המילה "תוספות"/"חינוך"
 function guessAuthorEra(name) {
  if (!name) return null;
- if (RISHONIM_NAMES.some(r => name.includes(r) || r.includes(name))) return 'ראשונים';
- if (ACHARONIM_NAMES.some(a => name.includes(a) || a.includes(name))) return 'אחרונים';
- return null;
+ const n = String(name).replace(/[״”“]/g, '"').replace(/[׳’‘]/g, "'").trim();
+ if (n.length < 2) return null;
+ let best = null, bestLen = 0;
+ const scan = (list, era) => list.forEach(x => {
+ const hit = n.includes(x) ? x.length : ((n.length >= 3 && x.includes(n)) ? n.length : 0);
+ if (hit > bestLen) { bestLen = hit; best = era; }
+ });
+ scan(RISHONIM_NAMES, 'ראשונים');
+ scan(ACHARONIM_NAMES, 'אחרונים');
+ return best;
 }
 // מנחש לאיזו תיקייה שייך שם ספר (ספרי הלכה קודם, אח"כ ראשונים/אחרונים) - ניחוש התחלתי בלבד
 function guessSourceFolder(bookName) {
  if (!bookName) return null;
  if (HALACHA_SEFARIM_NAMES.some(h => bookName.includes(h))) return 'ספרי הלכה';
- if (RISHONIM_NAMES.some(r => bookName.includes(r) || r.includes(bookName))) return 'ראשונים';
- if (ACHARONIM_NAMES.some(a => bookName.includes(a) || a.includes(bookName))) return 'אחרונים';
- return null;
+ return guessAuthorEra(bookName);
 }
 
 window.onload = function() {
  const key = localStorage.getItem('gemini_key');
  if (key) document.getElementById('apiKey').value = key;
+ const key2 = localStorage.getItem('gemini_key2');
+ if (key2 && document.getElementById('apiKey2')) document.getElementById('apiKey2').value = key2;
  updateApiBoxStatus();
  initTheme();
  // משחזר את העדפת מצב-כהה השמורה, ומיישר את מצב תיבת-הסימון בהגדרות בהתאם
@@ -1035,9 +1292,11 @@ function updateConnectionBadge() {
 // --- ניהול מפתח ה-API (בתוך חלונית הגדרות נפרדת, מוסתר מהמסך הראשי) ---
 function toggleKeyVisibility() {
  const input = document.getElementById('apiKey');
+ const input2 = document.getElementById('apiKey2');
  const btn = document.getElementById('toggleKeyBtn');
  const isHidden = input.type === 'password';
  input.type = isHidden ? 'text' : 'password';
+ if (input2) input2.type = input.type;
  if (btn) btn.textContent = isHidden ? 'הסתר' : 'הצג';
 }
 // מצב תצוגה כהה - נשמר להעדפה הבאה, מוחל דרך data-theme על ה-html עצמו כדי שכל הכללים המבוססים
@@ -1048,8 +1307,21 @@ function toggleDarkMode(isDark) {
 }
 function updateApiBoxStatus() {
  const key = document.getElementById('apiKey').value.trim();
- document.getElementById('apiBoxStatus').style.display = key ? 'block' : 'none';
+ document.getElementById('apiBoxStatus').style.display = key ? 'inline' : 'none';
+ const k2 = document.getElementById('apiKey2');
+ const s2 = document.getElementById('apiBoxStatus2');
+ if (k2 && s2) s2.style.display = k2.value.trim() ? 'inline' : 'none';
 }
+// --- שני מפתחות API: כל הקריאות עוברות דרך המפתח ה"פעיל"; בעומס (429/503) או מכסה שנגמרה
+// עוברים מיד למפתח השני, ורק אם שניהם עמוסים מחכים ומנסים שוב ---
+function getGeminiKeys() {
+ const k1 = (document.getElementById('apiKey') || {}).value || localStorage.getItem('gemini_key') || '';
+ const k2El = document.getElementById('apiKey2');
+ const k2 = (k2El ? k2El.value : '') || localStorage.getItem('gemini_key2') || '';
+ return [...new Set([k1.trim(), k2.trim()].filter(Boolean))];
+}
+function getPrimaryGeminiKey() { return getGeminiKeys()[0] || ''; }
+let geminiActiveKeyIndex = 0;
 
 // --- צבע עיצוב (theme): כמה גוונים לבחירה, נשמר במחשב ומוחל בכל טעינה מחדש דרך משתני CSS ---
 const THEME_PRESETS = [
@@ -1213,10 +1485,10 @@ function dismissLocationSuggestion(idx) {
  if (el) el.remove();
 }
 async function findLocationsForKnownSources() {
- const key = document.getElementById('apiKey').value.trim();
+ const key = getPrimaryGeminiKey();
  if (!key) { alert('אנא הדבק מפתח API בשדה העליון.'); return; }
  const knownList = [...new Set([...(currentAnalysis.sources || []), ...(currentAnalysis.authors || [])])].filter(s => s && s !== 'כללי' && s !== 'לא צוין מחבר');
- if (!knownList.length && !currentAnalysis.deepReasoning) { alert('אין עדיין מקורות/מחברים מזוהים - קודם צריך לנתח את הטקסט (כפתור "סרוק ונתח").'); return; }
+ if (!knownList.length && !currentAnalysis.deepReasoning) { alert('אין עדיין מקורות/מחברים מזוהים - קודם צריך לנתח את הטקסט (כפתור "נתח וזהה מקורות").'); return; }
  const box = document.getElementById('inferredConnectionsBox');
  const container = document.getElementById('inferredConnectionsList');
  box.style.display = 'block';
@@ -1456,8 +1728,15 @@ async function callGeminiText(key, prompt) {
  return data.candidates[0].content.parts[0].text;
 }
 
-async function callGeminiRaw(key, prompt, generationConfig, retryCount) {
+async function callGeminiRaw(key, prompt, generationConfig, retryCount, triedKeys) {
  retryCount = retryCount || 0;
+ triedKeys = triedKeys || 0;
+ // המפתח שנשלח מהקורא משמש רק אם לא הוגדרו מפתחות בהגדרות; אחרת משתמשים במפתח הפעיל כרגע
+ const allKeys = getGeminiKeys();
+ if (allKeys.length) {
+ if (geminiActiveKeyIndex >= allKeys.length) geminiActiveKeyIndex = 0;
+ key = allKeys[geminiActiveKeyIndex];
+ }
  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
  const body = JSON.stringify({
  contents: [{ parts: [{ text: prompt }] }],
@@ -1517,6 +1796,14 @@ async function callGeminiRaw(key, prompt, generationConfig, retryCount) {
  const errMsg = (data.error && data.error.message) || '';
  const isRateLimit = res.status === 429;
  const isOverloaded = res.status === 503 || /overloaded|high demand/i.test(errMsg);
+ const isBadKey = data.error && (res.status === 400 || res.status === 401 || res.status === 403) && /api key|API_KEY|permission|unauthori/i.test(errMsg);
+ // יש מפתח נוסף שעוד לא נוסה בסבב הזה - עוברים אליו מיד, בלי לחכות
+ if ((isRateLimit || isOverloaded || isBadKey) && allKeys.length > 1 && triedKeys < allKeys.length - 1) {
+ geminiActiveKeyIndex = (geminiActiveKeyIndex + 1) % allKeys.length;
+ const statusEl0 = document.getElementById('loading');
+ if (statusEl0) statusEl0.textContent = `🔁 עומס על מפתח ה-API - עובר למפתח ${geminiActiveKeyIndex + 1}...`;
+ return callGeminiRaw(key, prompt, generationConfig, retryCount, triedKeys + 1);
+ }
  if ((isRateLimit || isOverloaded) && retryCount < 5) {
  let waitSeconds = isOverloaded ? 6 : 5;
  const match = errMsg.match(/retry in ([\d.]+)s/i);
@@ -1527,7 +1814,7 @@ async function callGeminiRaw(key, prompt, generationConfig, retryCount) {
  const statusEl = document.getElementById('loading');
  if (statusEl) statusEl.textContent = `⏳ עומס זמני על ה-AI - מנסה שוב בעוד ${Math.round(waitSeconds)} שניות (ניסיון ${retryCount + 2} מתוך 6)...`;
  await new Promise(resolve => setTimeout(resolve, (waitSeconds + 1) * 1000));
- return callGeminiRaw(key, prompt, generationConfig, retryCount + 1);
+ return callGeminiRaw(key, prompt, generationConfig, retryCount + 1, 0);
  }
 
  return data;
@@ -1545,7 +1832,7 @@ ${reasoning ? `\nלהלן ניתוח מקדים שכתבת בעצמך על הט�
  "topics": ["נושאים וסוגיות הלכתיות/עיוניות - רק כאלה שהם באמת מוקד הדיון בטקסט (מה שהטקסט עצמו דן/מתווכח/מנתח), לא כל עניין הלכתי שרק מוזכר או נוגע בו בדרך אגב. עדיף פחות נושאים ומדויקים מאשר הרבה נושאים רופפים - אם הטקסט עוסק במפורש רק בנושא אחד, אל תוסיף נושאים נוספים רק כי הם קשורים מבחינה עניינית כללית"],
  "sourceQuotes": [{"source":"שם המקור/מחבר בדיוק כפי שמופיע ברשימת sources/authors","quote":"ציטוט מדויק ומילולי (לא פרפראזה!) של משפט או ביטוי קצר מתוך הטקסט שכתב המשתמש - בדיוק כפי שכתוב שם - שממנו הובן הקשר למקור הזה. עד 8 מילים."}],
  "refs": [
- {"category":"shas","book":"שם המסכת בדיוק כפי שברשימה: ברכות/שבת/עירובין/פסחים/שקלים/יומא/סוכה/ביצה/ראש השנה/תענית/מגילה/מועד קטן/חגיגה/יבמות/כתובות/נדרים/נזיר/סוטה/גיטין/קידושין/בבא קמא/בבא מציעא/בבא בתרא/סנהדרין/מכות/שבועות/עבודה זרה/הוריות/זבחים/מנחות/חולין/בכורות/ערכין/תמורה/כריתות/מעילה/נדה","daf":"מספר הדף בגימטריה עברית כמו ב, ג, י, כ בלי הניקוד","amud":"א או ב אם ידוע, אחרת השאר ריק","commentator":"שם המפרש אם זה מיקום של פירוש על הדף, אחרת ריק","dh":"דיבור המתחיל אם ידוע, אחרת ריק"},
+ {"category":"shas","book":"שם המסכת בדיוק כפי שברשימה: ברכות/שבת/עירובין/פסחים/שקלים/יומא/סוכה/ביצה/ראש השנה/תענית/מגילה/מועד קטן/חגיגה/יבמות/כתובות/נדרים/נזיר/סוטה/גיטין/קידושין/בבא קמא/בבא מציעא/בבא בתרא/סנהדרין/מכות/שבועות/עבודה זרה/הוריות/זבחים/מנחות/חולין/בכורות/ערכין/תמורה/כריתות/מעילה/נדה","daf":"מספר הדף בגימטריה עברית כמו ב, ג, י, כ בלי הניקוד","amud":"א או ב אם ידוע, אחרת השאר ריק","commentator":"שם המפרש אם זה מיקום של פירוש על הדף, אחרת ריק","dh":"דיבור המתחיל אם ידוע, אחרת ריק","quote":"מילים מדויקות מלשון הגמרא/המשנה שהמשתמש ציטט על המקום הזה (עד 8 מילים), אחרת ריק","altBooks":["מסכתות חלופיות אפשריות לפי סדר סבירות, רק אם אינך בטוח לגמרי במסכת - עד 4. אחרת מערך ריק"]},
  {"category":"chumash","book":"אחד מ: בראשית/שמות/ויקרא/במדבר/דברים (גם עבור נביאים/כתובים - שם הספר, למשל ישעיהו/תהלים)","parasha":"שם הפרשה אם ידוע (רק לחומש), אחרת השאר ריק","perek":"מספר הפרק בגימטריה עברית אם ידוע, אחרת השאר ריק","pasuk":"מספר הפסוק בגימטריה עברית אם ידוע, אחרת השאר ריק"},
  {"category":"other","book":"שם הספר/הלכה (למשל: משנה ברורה / שולחן ערוך אורח חיים / טור יורה דעה / רמב\"ם הלכות שבת / משנה עירובין / בראשית רבה / ירושלמי ברכות / ספרי במדבר) - חשוב לרמב\"ם: חובה לציין את שם ה'הלכות'הספציפי (למשל 'רמב\"ם הלכות שבת', לא סתם 'רמב\"ם' לבד - בלי זה אי אפשר לדעת מאיזה מתוך 83 הספרים של משנה תורה מדובר)","location":"מיקום מדויק ובפורמט אחיד: 'סימן X סעיף Y' (משנה ברורה/שו\"ע/טור), 'פרק X הלכה Y' (רמב\"ם/ירושלמי), 'פרק X משנה Y' (משנה), 'פרשה X סימן Y' (מדרש רבה), 'פיסקא X' (ספרי), 'פרק X פסוק Y' (נביאים/כתובים אם לא השתמשת ב-chumash) - השתמש במספרים בגימטריה עברית"}
  ]
@@ -1562,6 +1849,13 @@ ${reasoning ? `\nלהלן ניתוח מקדים שכתבת בעצמך על הט�
 5. מחבר עם כמה חיבורים - בחר את החיבור לפי ההקשר: רמב"ן/רשב"א/ריטב"א בסוגיית גמרא = חידושיהם על אותה מסכת; רמב"ם בדיון הלכתי = משנה תורה עם שם ההלכות; רש"י בדיון על פסוק = רש"י על התורה.
 6. אל תמציא מיקום שאין לו בסיס בטקסט או בהקשר - עדיף לרשום את הספר בלי דף מאשר דף שגוי.
 
+זיהוי המסכת - חשוב ביותר (הכותב לעיתים כותב רק דף ודיבור המתחיל, בלי שם המסכת):
+א. קבע את המסכת לפי כל הסימנים יחד, לא לפי סימן אחד: (1) הנושא שהחידוש דן בו - איזו מסכת דנה בדיוק בנושא הזה בדף הזה; (2) לשון הדיבור המתחיל - איזה רש"י/תוספות/ראשון על הדף הזה פותח במילים האלה; (3) ציטוטי לשון הגמרא/המשנה, שמות התנאים והאמוראים, והמושגים ההלכתיים שבטקסט; (4) מסכת שהוזכרה במקום אחר בטקסט (כותרת, "במסכתין", "בסוגיין", "לעיל בפרקין"), ושם הפרק אם הוזכר.
+ב. לפני שאתה מתחייב - בדוק עקביות: האם בדף הזה של המסכת הזאת באמת נידון נושא החידוש, והאם הדיבור המתחיל באמת שייך לסוגיה שבאותו דף? אם לא - זו לא המסכת; חפש מסכת אחרת שבאותו דף עוסקת בנושא.
+ג. אל תבחר מסכת רק כי היא נפוצה או ראשונה שעולה בדעתך. מסכת שאין בה דף כזה (למשל מגילה דף נ) - פסולה.
+ד. כתוב את הדיבור המתחיל (dh) בדיוק כפי שהכותב כתב אותו, מילה במילה - התוכנה מחפשת אותו בטקסט האמיתי של הגמרא והמפרשים ומתקנת לפיו את המסכת והעמוד.
+ה. אם יש ספק בין כמה מסכתות - כתוב ב-book את הסבירה ביותר וב-altBooks את האחרות; כולן ייבדקו מול הטקסט עצמו.
+
 אם אין התייחסות לקטגוריה מסוימת - השאר מערך ריק. אם לא בטוח לגבי דף/פרשה/סימן מדויקים - השאר את השדה ריק אבל עדיין ציין את הספר.
 
 חשוב מאוד: החזר JSON תקין בהחלט - בדוק שכל מערך סגור נכון (פסיק בין איברים, לא אחרי האחרון), וששום מחרוזת לא מכילה מרכאות כפולות לא-בורחות.
@@ -1574,7 +1868,7 @@ ${text}`;
 // זה נותן למודל מקום "לחשוב"לפני שהוא מחויב למבנה נוקשה - משפר דיוק, במחיר קריאת API כפולה.
 async function runDeepAnalysis(key, text) {
  const reasoningPrompt = `נתח בקצרה (כ-8-14 שורות, טקסט חופשי, לא JSON) את הטקסט התורני הבא בשלושה חלקים נפרדים:
-0. מהי הסוגיה המרכזית (מסכת ודף ועמוד / ספר פרק ופסוק / סימן וסעיף) - גם אם לא נכתבה במפורש, לפי ציטוטי הלשון וההקשר. ולכל מפרש שמוזכר (רש"י, תוספות, ראשונים, אחרונים): על איזה מקום בדיוק הוא נכתב, ומה הדיבור המתחיל אם ידוע. שים לב ל"שם", "בסוגיין", "ע"ב", "לעיל" - הם מפנים למקום שהוזכר קודם.
+0. מהי הסוגיה המרכזית (מסכת ודף ועמוד / ספר פרק ופסוק / סימן וסעיף) - גם אם לא נכתבה במפורש, לפי ציטוטי הלשון וההקשר. כשכתוב רק דף ודיבור המתחיל בלי מסכת: נמק במפורש איזו מסכת, לפי הנושא, לשון הד"ה, שמות האמוראים והמושגים - ובדוק שבדף הזה במסכת שבחרת באמת נידון הנושא הזה. אם יש ספק, מנה את המסכתות האפשריות לפי סדר סבירות. ולכל מפרש שמוזכר (רש"י, תוספות, ראשונים, אחרונים): על איזה מקום בדיוק הוא נכתב, ומה הדיבור המתחיל אם ידוע. שים לב ל"שם", "בסוגיין", "ע"ב", "לעיל" - הם מפנים למקום שהוזכר קודם.
 1. אילו מקורות תורניים, מחברים ונושאים **מפורשים** (מוזכרים בשמם, או מצוטטים בבירור) אתה מזהה.
 2. רמזים עקיפים אפשריים - ניסוח מפורש-למחצה (כמו "כעין קושיית..."בלי לנקוב בשם), או תוכן שמזכיר טענה/קטע קונקרטי וניתן-לזיהוי ממקור ידוע, בלי ששם המחבר הוזכר בפועל. ציין זאת בנפרד מהחלק הראשון, עם הסבר קצר איזו טענה ספציפית זה מזכיר ובאיזה מקור. חשוב: אל תזהה קשר רק כי משהו "נשמע כמו"הסגנון הכללי של מחבר מסוים - רק תוכן קונקרטי. אם אינך בטוח, ציין זאת כניחוש בעל ביטחון נמוך, לא כעובדה ודאית.
 
@@ -1641,6 +1935,8 @@ async function analyzeTextData(key, text, deepMode) {
  const out = { ...r };
  if (out.commentator) out.commentator = cleanSourceName(out.commentator); else delete out.commentator;
  if (out.dh) out.dh = String(out.dh).replace(/^ד["'׳״]?ה\s+/, '').trim(); else delete out.dh;
+ if (out.quote) out.quote = String(out.quote).trim(); else delete out.quote;
+ if (Array.isArray(out.altBooks)) { out.altBooks = out.altBooks.filter(b => SHAS_ORDER.includes(b) && b !== out.book).slice(0, 4); if (!out.altBooks.length) delete out.altBooks; } else delete out.altBooks;
  return out;
  }),
  sourceQuotes: sourceQuotes,
@@ -1649,7 +1945,7 @@ async function analyzeTextData(key, text, deepMode) {
 }
 
 async function analyzeText() {
- const key = document.getElementById('apiKey').value.trim();
+ const key = getPrimaryGeminiKey();
  const text = getEditorText();
  const html = getEditorHtml();
  const noteType = getSelectedNoteType();
@@ -2386,6 +2682,208 @@ function hebrewRefToSefariaRef(r) {
 
 // בודק שכל מיקום שזוהה קיים באמת - מול ספריית אוצריא שבמחשב או מול ספריא (לפי ההגדרות),
 // ומנסה גם לאתר את ה"ד"ה"שצוין בטקסט בתוך התוספות באותו מיקום, אם רלוונטי
+// ===== איתור מדויק של מסכת ודף לפי הדיבור המתחיל, בטקסט האמיתי של הגמרא והמפרשים =====
+// ה-AI לבדו טועה לפעמים במסכת כשכתוב רק דף וד"ה. כאן מחפשים את הד"ה עצמו: קודם במסכת שה-AI בחר,
+// אחר כך במסכתות החלופיות שהציע, אחר כך שואלים את ה-AI שאלה ממוקדת, ובספריית אוצריא שבמחשב
+// גם סורקים את אותו דף בכל הש"ס. מתקנים רק כשהד"ה נמצא בפועל.
+const SHAS_LAST_DAF = {"ברכות":64,"שבת":157,"עירובין":105,"פסחים":121,"שקלים":22,"יומא":88,"סוכה":56,"ביצה":40,"ראש השנה":35,"תענית":31,"מגילה":32,"מועד קטן":29,"חגיגה":27,"יבמות":122,"כתובות":112,"נדרים":91,"נזיר":66,"סוטה":49,"גיטין":90,"קידושין":82,"בבא קמא":119,"בבא מציעא":119,"בבא בתרא":176,"סנהדרין":113,"מכות":24,"שבועות":49,"עבודה זרה":76,"הוריות":14,"זבחים":120,"מנחות":110,"חולין":142,"בכורות":61,"ערכין":34,"תמורה":34,"כריתות":28,"מעילה":37,"נדה":73};
+function shasDafExists(book, daf) {
+ const n = hebrewLettersToNumber(daf);
+ return !!SHAS_LAST_DAF[book] && n >= 2 && n <= SHAS_LAST_DAF[book];
+}
+// דיבורים המתחילים שהכותב כתב בעצמו ("ד"ה...", "בד"ה...", "דיבור המתחיל..."), עם רמז למפרש שלפניהם
+function extractDhPhrasesFromText(text) {
+ const out = [];
+ const re = /(?:^|[\s(\[,;:.])(?:וב|ב|ו)?(?:ד["״׳'”]ה|דיבור המתחיל|דבור המתחיל|בד"ה)\s+([^\s,.;:()\[\]"״”]+(?:\s+[^\s,.;:()\[\]"״”]+){0,4})/g;
+ let m;
+ while ((m = re.exec(text || ''))) {
+ const phrase = m[1].replace(/['׳]+$/, '').trim();
+ if (normalizeForDh(phrase).replace(/ /g, '').length < 3) continue;
+ const before = text.slice(Math.max(0, m.index - 30), m.index + 1);
+ let commentator = '';
+ if (/תוס(?:פות|['׳])/.test(before)) commentator = 'תוספות';
+ else if (/רש["״׳']?י/.test(before)) commentator = 'רש"י';
+ else if (/ר["״׳']?ן/.test(before)) commentator = 'ר"ן';
+ else if (/רשב["״׳']?ם/.test(before)) commentator = 'רשב"ם';
+ out.push({ phrase, commentator, pos: m.index });
+ }
+ return out;
+}
+// "דף כג ע"ב" / "דף כג:" / "דף כ"ג." שהכותב כתב בעצמו
+function extractDafMentionsFromText(text) {
+ const out = [];
+ const re = /(?:^|[\s(\[,;])(?:ב?דף|ב?ד['׳])\s*([א-ת]{1,3}(?:["״׳'][א-ת])?)\s*(?:ע["״׳']?([אב])|([.:]))?/g;
+ let m;
+ while ((m = re.exec(text || ''))) {
+ const daf = m[1].replace(/["״׳']/g, '');
+ const n = hebrewLettersToNumber(daf);
+ if (n < 2 || n > 176) continue;
+ const amud = m[2] || (m[3] === '.' ? 'א' : m[3] === ':' ? 'ב' : '');
+ out.push({ daf, amud, pos: m.index });
+ }
+ return out;
+}
+function shasNamesInText(text) {
+ return SHAS_ORDER.filter(b => new RegExp('(^|[^א-ת])(?:מסכת |מס[\'׳] |ב|ו|ד)?' + b.replace(/ /g, '\\s+') + '(?![א-ת])').test(text || ''));
+}
+function phraseInGemara(segments, phrase) {
+ const want = normalizeForDh(phrase).split(' ').slice(0, 4).join(' ');
+ if (want.replace(/ /g, '').length < 5 || want.split(' ').length < 2) return false;
+ return segments.some(s => normalizeForDh(s).includes(want));
+}
+const shasProbeCache = new Map();
+// בודק אם הד"ה נמצא במסכת/דף מסוימים: אצל המפרש (רש"י/תוספות או מי שצוין), ואם לא - בלשון הגמרא
+async function probeShasForDh(book, daf, amud, phrase, commHint) {
+ const ck = [book, daf, amud, phrase, commHint].join('|');
+ if (shasProbeCache.has(ck)) return shasProbeCache.get(ck);
+ let result = { found: false };
+ const comms = commHint === '-' ? [] : commHint ? [commHint] : ['רש"י', 'תוספות'];
+ for (const c of comms) {
+ try {
+ const res = await findCommentary({ category: 'shas', book, daf, amud: amud || 'א', commentator: c, dh: phrase });
+ if (res.hit && res.hit.dhFound) {
+ const patch = res.hit.base && res.hit.base.patch || {};
+ result = { found: true, strength: 2, book, daf: patch.daf || daf, amud: patch.amud || amud || '', commentator: c };
+ break;
+ }
+ } catch (e) { /* ממשיכים לבדיקה הבאה */ }
+ }
+ if (!result.found) {
+ for (const a of (amud === 'ב' ? ['ב', 'א'] : ['א', 'ב'])) {
+ try {
+ const t = await fetchSourceText({ category: 'shas', book, daf, amud: a });
+ if (t.status === 'ok' && phraseInGemara(t.segments || [], phrase)) { result = { found: true, strength: 1, book, daf, amud: a, commentator: '' }; break; }
+ } catch (e) { /* ממשיכים */ }
+ }
+ }
+ shasProbeCache.set(ck, result);
+ return result;
+}
+// שאלה ממוקדת ל-AI: באיזו מסכת נמצא הד"ה הזה - רק כשלא נמצא במקומות שכבר הוצעו
+async function askAiShasCandidates(phrase, commHint, daf, amud, text) {
+ const key = getPrimaryGeminiKey();
+ if (!key) return [];
+ const prompt = `בחידוש תורה שלהלן מוזכר דיבור המתחיל "${phrase}"${commHint ? ` של ${commHint}` : ''}${daf ? ` בדף ${daf}${amud ? ` עמוד ${amud}` : ''}` : ''}. המטרה: לקבוע בדיוק באיזו מסכת בתלמוד בבלי, באיזה דף ועמוד, נמצא הדיבור המתחיל הזה.
+שקול יחד: הנושא שהחידוש דן בו, שמות התנאים והאמוראים והמושגים שבו, ולשון הדיבור המתחיל עצמו - איזה רש"י / תוספות / לשון גמרא מתחיל במילים האלה. ודא שבדף שאתה מציע באמת נידון נושא החידוש. אל תציע מסכת שאין בה דף כזה.
+החזר JSON בלבד: {"candidates":[{"book":"שם המסכת","daf":"דף בגימטריה בלי גרשיים","amud":"א או ב או ריק","commentator":"רש\\"י / תוספות / ריק אם זו לשון הגמרא","reason":"נימוק קצר"}]}
+עד 6 אפשרויות, הסבירה ביותר ראשונה.
+
+החידוש:
+${String(text || '').slice(0, 4000)}`;
+ try {
+ const data = await callGemini(key, prompt);
+ if (data.error) return [];
+ const parsed = safeJsonParse(data.candidates[0].content.parts[0].text);
+ return (Array.isArray(parsed.candidates) ? parsed.candidates : [])
+ .map(c => ({ book: String(c.book || '').trim(), daf: String(c.daf || '').replace(/["״׳']/g, '').trim(), amud: c.amud === 'ב' ? 'ב' : c.amud === 'א' ? 'א' : '', commentator: String(c.commentator || '').trim() }))
+ .filter(c => SHAS_ORDER.includes(c.book));
+ } catch (e) { return []; }
+}
+// הפעולה הראשית: עוברת על כל דיבור המתחיל (מה-AI ומהטקסט עצמו) ומאתרת את המקום האמיתי שלו.
+// analysis = { text, refs } (משתנה במקום). מחזיר { messages, changed }
+async function pinpointShasRefs(analysis, onProgress) {
+ const messages = [];
+ let changed = false;
+ if (!analysis || !analysis.text) return { messages, changed };
+ const sources = await activeTextSources();
+ if (!sources.length) return { messages, changed };
+ const fullScanOk = sources.includes('otzaria'); // סריקת כל הש"ס - רק כשאוצריא מותקנת במחשב (מהיר)
+ analysis.refs = analysis.refs || [];
+ const shasRefs = analysis.refs.filter(r => r.category === 'shas');
+ const textDafs = extractDafMentionsFromText(analysis.text);
+ const textBooks = shasNamesInText(analysis.text);
+ const sameDh = (a, b) => { const x = normalizeForDh(a).split(' ').slice(0, 2).join(' '), y = normalizeForDh(b).split(' ').slice(0, 2).join(' '); return !!x && x === y; };
+
+ // משימות: כל ref של ש"ס עם ד"ה או ציטוט, ועוד כל ד"ה שכתוב בטקסט ואין לו ref
+ const tasks = [];
+ shasRefs.forEach(r => { if (r.dh) tasks.push({ ref: r, phrase: r.dh, comm: r.commentator || '' }); else if (r.quote) tasks.push({ ref: r, phrase: r.quote, comm: '', gemaraOnly: true }); });
+ extractDhPhrasesFromText(analysis.text).forEach(d => {
+ if (tasks.some(t => sameDh(t.phrase, d.phrase))) return;
+ const nearDaf = textDafs.filter(x => x.pos <= d.pos).pop() || null;
+ tasks.push({ ref: null, phrase: d.phrase, comm: d.commentator, nearDaf });
+ });
+ if (!tasks.length) return { messages, changed };
+
+ for (let ti = 0; ti < tasks.length; ti++) {
+ const t = tasks[ti];
+ if (onProgress) onProgress(`מאתר את המקום המדויק של ד"ה "${t.phrase}" (${ti + 1} מתוך ${tasks.length})...`);
+ const dafOpts = [];
+ const addDaf = (daf, amud) => { if (daf && !dafOpts.some(x => x.daf === daf)) dafOpts.push({ daf, amud: amud || '' }); };
+ if (t.ref) addDaf(t.ref.daf, t.ref.amud);
+ if (t.nearDaf) addDaf(t.nearDaf.daf, t.nearDaf.amud);
+ shasRefs.forEach(r => addDaf(r.daf, r.amud));
+ textDafs.forEach(x => addDaf(x.daf, x.amud));
+ const books = [];
+ const addBook = b => { if (b && SHAS_ORDER.includes(b) && !books.includes(b)) books.push(b); };
+ if (t.ref) { addBook(t.ref.book); (t.ref.altBooks || []).forEach(addBook); }
+ textBooks.forEach(addBook);
+ shasRefs.forEach(r => { addBook(r.book); (r.altBooks || []).forEach(addBook); });
+
+ const tried = new Set();
+ const tryAt = async (book, daf, amud, comm) => {
+ const k = `${book}|${daf}`;
+ if (!book || !daf || tried.has(k + '|' + comm) || !shasDafExists(book, daf)) return null;
+ tried.add(k + '|' + comm);
+ const res = await probeShasForDh(book, daf, amud, t.phrase, t.gemaraOnly ? '-' : comm);
+ return res.found && (!t.gemaraOnly || res.strength === 1) ? res : null;
+ };
+ let found = null;
+ // 1) המסכתות שה-AI הציע / שמוזכרות בטקסט, בדפים שהוזכרו
+ for (const b of books) { for (const d of dafOpts) { found = await tryAt(b, d.daf, d.amud, t.comm); if (found) break; } if (found) break; }
+ // 2) שאלה ממוקדת ל-AI
+ if (!found) {
+ if (onProgress) onProgress(`הד"ה "${t.phrase}" לא נמצא במקום שזוהה - בודק אפשרויות נוספות...`);
+ const cands = await askAiShasCandidates(t.phrase, t.comm, (dafOpts[0] || {}).daf, (dafOpts[0] || {}).amud, analysis.text);
+ for (const c of cands) { found = await tryAt(c.book, c.daf, c.amud, t.comm || c.commentator); if (found) break; }
+ }
+ // 3) סריקת אותו דף בכל הש"ס (רק כשאוצריא מותקנת במחשב)
+ if (!found && fullScanOk && dafOpts.length) {
+ for (const d of dafOpts.slice(0, 2)) {
+ if (onProgress) onProgress(`סורק את דף ${d.daf} בכל הש"ס כדי למצוא את ד"ה "${t.phrase}"...`);
+ const hits = [];
+ for (const b of SHAS_ORDER) { const h = await tryAt(b, d.daf, d.amud, t.comm); if (h) hits.push(h); if (hits.length > 1) break; }
+ if (hits.length === 1) { found = hits[0]; break; }
+ if (hits.length > 1) { messages.push(`⚠ ד"ה "${t.phrase}" נמצא ביותר ממסכת אחת בדף ${d.daf} (${hits.map(h => h.book).join(', ')}) - כדאי לציין את שם המסכת`); found = 'ambiguous'; break; }
+ }
+ }
+ if (!found) { messages.push(`⚠ ד"ה "${t.phrase}" לא נמצא בטקסט הגמרא והמפרשים במקומות שנבדקו - כדאי לבדוק את המיקום ידנית`); continue; }
+ if (found === 'ambiguous') continue;
+
+ const newLoc = { book: found.book, daf: found.daf, amud: found.amud };
+ const comm = t.gemaraOnly ? '' : (found.commentator || t.comm || '');
+ if (t.ref) {
+ const before = formatRef(t.ref);
+ const moved = t.ref.book !== newLoc.book || t.ref.daf !== newLoc.daf || (newLoc.amud && t.ref.amud !== newLoc.amud);
+ Object.assign(t.ref, newLoc);
+ if (comm && !t.ref.commentator && found.strength === 2) t.ref.commentator = comm;
+ delete t.ref.altBooks;
+ if (moved) { changed = true; messages.push(`✎ <b>${escapeHtml(before)}</b> - תוקן ל<b>${escapeHtml(formatRef(t.ref))}</b> (לפי מה שנמצא בטקסט הגמרא והמפרשים עצמו)`); }
+ else messages.push(`✓ ד"ה "${escapeHtml(t.phrase)}" נמצא בדיוק ב<b>${escapeHtml(formatBaseRef(t.ref))}</b>`);
+ // ה-ref הראשי של הגמרא (בלי מפרש) על אותו מקום - מתקנים גם אותו, אם ה-AI שם אותו במסכת אחרת
+ if (moved) analysis.refs.forEach(r => { if (r !== t.ref && r.category === 'shas' && !r.commentator && !r.dh && r.book === shasRefsBook(before) && r.daf === t.ref.daf) r.book = newLoc.book; });
+ } else {
+ const nr = { category: 'shas', ...newLoc };
+ if (comm && found.strength === 2) { nr.commentator = comm; nr.dh = t.phrase; }
+ if (!analysis.refs.some(r => formatRef(r) === formatRef(nr))) {
+ analysis.refs.push(nr);
+ changed = true;
+ messages.push(`➕ ד"ה "${escapeHtml(t.phrase)}" אותר ב<b>${escapeHtml(formatRef(nr))}</b> ונוסף למיקומים`);
+ }
+ }
+ }
+ // מאחדים כפילויות שנוצרו מהתיקון
+ const seen = new Set();
+ analysis.refs = analysis.refs.filter(r => { const k = formatRef(r); if (seen.has(k)) return false; seen.add(k); return true; });
+ // מקור "מסכת X" שגוי ברשימת המקורות - מתקנים גם אותו
+ if (changed && Array.isArray(analysis.sources)) {
+ const shasNow = [...new Set(analysis.refs.filter(r => r.category === 'shas').map(r => r.book))];
+ analysis.sources = analysis.sources.filter(s => !SHAS_ORDER.includes(s) || shasNow.includes(s) || textBooks.includes(s));
+ shasNow.forEach(b => { if (!analysis.sources.includes(b)) analysis.sources.push(b); });
+ }
+ return { messages, changed };
+}
+function shasRefsBook(label) { return SHAS_ORDER.find(b => String(label).includes(b)) || ''; }
+
 async function verifyRefsAgainstSefaria() {
  const statusEl = document.getElementById('sefariaVerifyStatus');
  if (!currentAnalysis || !currentAnalysis.refs || !currentAnalysis.refs.length) {
@@ -2401,6 +2899,18 @@ async function verifyRefsAgainstSefaria() {
 
  let results = [];
  let correctedAny = false;
+ // שלב ראשון: איתור מסכת ודף לפי הדיבור המתחיל בטקסט האמיתי
+ let pinpointHtml = '';
+ try {
+ const pin = await pinpointShasRefs(currentAnalysis, msg => { statusEl.textContent = msg; });
+ if (pin.messages.length) pinpointHtml = pin.messages.map(m => `<div>${m}</div>`).join('');
+ if (pin.changed) {
+ correctedAny = true;
+ document.getElementById('refsList').innerHTML = currentAnalysis.refs.map(x => `<span class="tag ref-tag">${escapeHtml(formatRef(x))}</span>`).join(' ');
+ if (chipRegistry['sourcesList']) { chipRegistry['sourcesList'].arr.splice(0, chipRegistry['sourcesList'].arr.length, ...currentAnalysis.sources); renderChipListUI('sourcesList'); }
+ }
+ } catch (e) { /* האיתור הוא תוספת - לא מפיל את הבדיקה */ }
+ statusEl.textContent = `בודק מול ${sources.map(x => SOURCE_NAMES[x]).join(' ו')}...`;
  for (const r of currentAnalysis.refs) {
  // מפרש: בודקים שהוא באמת קיים על המקום, ושהדיבור המתחיל נמצא שם. אם הד"ה נמצא דווקא
  // בעמוד הסמוך - מתקנים את המיקום אוטומטית (טעות נפוצה של ה-AI בעמוד א/ב)
@@ -2446,7 +2956,7 @@ async function verifyRefsAgainstSefaria() {
  }
  }
 
- let html = '';
+ let html = pinpointHtml;
  results.forEach(({ r, status, url, before, source, partial }) => {
  const label = formatRef(r);
  const where = SOURCE_NAMES[source] || 'הספרייה';
@@ -2476,10 +2986,10 @@ async function verifyRefsAgainstSefaria() {
 // לנקוב בשמם. מבוסס על ידע כללי של ה-AI (לא שאילתה לספריא), ולכן מוצג גם הוא לבדיקה ואישור.
 let currentRelatedBooks = [];
 async function suggestRelatedBooksOnTopics() {
- const key = document.getElementById('apiKey').value.trim();
+ const key = getPrimaryGeminiKey();
  if (!key) { alert('אנא הדבק מפתח API בשדה העליון.'); return; }
  if (!currentAnalysis || !currentAnalysis.topics || !currentAnalysis.topics.length || currentAnalysis.topics[0] === 'כללי') {
- alert('אין נושאים מזוהים לבדוק לפיהם - קודם צריך לנתח את הטקסט (כפתור "סרוק ונתח").');
+ alert('אין נושאים מזוהים לבדוק לפיהם - קודם צריך לנתח את הטקסט (כפתור "נתח וזהה מקורות").');
  return;
  }
  const box = document.getElementById('relatedBooksBox');
@@ -2781,7 +3291,7 @@ function saveDraft() {
  alert('נשמר כטיוטה ממתינה לסיווג. אפשר למצוא אותו בטאב "טיוטות ממתינות".');
 }
 
-// טוען חידוש קיים חזרה לתיבת הכתיבה לצורך עריכה/ניתוח. יש ללחוץ שוב "סרוק ונתח"ואז לשמור.
+// טוען חידוש קיים חזרה לתיבת הכתיבה לצורך עריכה/ניתוח. יש ללחוץ שוב "נתח וזהה מקורות" ואז לשמור.
 function editNote(noteId) {
  const note = notes.find(n => n.id === noteId);
  if (!note) return;
@@ -2791,7 +3301,7 @@ function editNote(noteId) {
  document.getElementById('resultBox').style.display = 'none';
  document.querySelector('button.save-btn').textContent = '2. עדכן חידוש קיים';
  window.scrollTo({ top: 0, behavior: 'smooth' });
- alert('הטקסט נטען לעריכה. ערוך אותו לפי הצורך, לחץ "סרוק ונתח"מחדש ואז שמור.');
+ alert('הטקסט נטען לעריכה. ערוך אותו לפי הצורך, לחץ "נתח וזהה מקורות" מחדש ואז שמור.');
 }
 
 // מסמן/מבטל סימון נעוץ לחידוש - חידושים נעוצים מוצגים תמיד בראש הספרייה, בלי קשר לשאר סדר המיון
@@ -3306,7 +3816,7 @@ function renderLibrary() {
 // רעיונית/עניינית מול שאר הספרייה - כדי לגלות קשרים שלא היית חושב לחפש בעצמך.
 let compareSelection = [];
 async function findRelatedNotes(noteId) {
- const key = document.getElementById('apiKey').value.trim();
+ const key = getPrimaryGeminiKey();
  if (!key) { alert('צריך מפתח API כדי להשתמש בתכונה הזו ( הגדרות).'); return; }
  const sourceNote = notes.find(n => n.id === noteId);
  if (!sourceNote) return;
@@ -3373,7 +3883,7 @@ function renderRelatedResultsList() {
 // --- זיהוי סתירות אפשריות: מקבץ חידושים לפי אותה סוגיה (מיקום/נושא משותף), ובודק בכל קבוצה כזו
 // (רק קבוצות עם 2+ חידושים - לא כל הצירופים האפשריים, כדי לחסוך עלות) אם יש מסקנות סותרות ממש.
 async function checkContradictions() {
- const key = document.getElementById('apiKey').value.trim();
+ const key = getPrimaryGeminiKey();
  if (!key) { alert('צריך מפתח API כדי להשתמש בתכונה הזו ( הגדרות).'); return; }
  const realNotes = notes.filter(n => !n.isDraft);
  let groups = {};
@@ -3441,8 +3951,8 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.3.0';
-const APP_VERSION_DATE = '22.10.2026';
+const APP_VERSION = '1.4.0';
+const APP_VERSION_DATE = '25.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/netfree/version.json';
 let pendingUpdateInfo = null;
 
@@ -3659,8 +4169,8 @@ function openUserGuide() {
 
  ${h2('כתיבת חידוש וניתוח')}
  <p>כתבו את החידוש בתיבת הטקסט הראשית, ולאחר מכן:</p>
- <p>• <strong>סרוק ונתח באמצעות AI</strong> - שולח את הטקסט לניתוח, ומזהה אוטומטית ספרים, מחברים ונושאים.<br>
- • <strong>שמור כטיוטה מהירה</strong> - שומר בלי ניתוח, לניתוח מאוחר יותר.</p>
+ <p>• <strong>נתח וזהה מקורות</strong> - שולח את הטקסט לניתוח, ומזהה אוטומטית ספרים, מחברים ונושאים.<br>
+ • <strong>שמור כטיוטה</strong> - שומר בלי ניתוח, לניתוח מאוחר יותר.</p>
 
  ${h2('ניתוח רגיל מול ניתוח מעמיק')}
  <p>• <strong>ניתוח רגיל</strong> - קריאה אחת ופשוטה. מזהה מקורות מפורשים. מהיר וחוסך מכסה.<br>
@@ -3825,7 +4335,7 @@ function clearCompareSelection() {
 const sefariaExcerptCache = new Map();
 async function runAiSemanticSearch() {
  const q = document.getElementById('searchInput').value.trim();
- const key = document.getElementById('apiKey').value.trim();
+ const key = getPrimaryGeminiKey();
  if (!q) { alert('הקלד קודם מה לחפש בתיבת החיפוש.'); return; }
  if (!key) { alert('צריך מפתח API כדי להשתמש בחיפוש AI סמנטי.'); return; }
 
@@ -4159,8 +4669,8 @@ let topicCategoryOverrides = JSON.parse(localStorage.getItem('topic_category_ove
 // יהיה לשייך נושאים אליהן גם בלי רשימת מילות-מפתח משלהן
 let customTopicCategories = JSON.parse(localStorage.getItem('custom_topic_categories') || '[]');
 function saveCustomTopicCategories() { localStorage.setItem('custom_topic_categories', JSON.stringify(customTopicCategories)); }
-function addCustomTopicCategory(providedName) {
- const name = providedName !== undefined ? providedName : prompt('שם הקטגוריה החדשה:');
+async function addCustomTopicCategory(providedName) {
+ const name = providedName !== undefined ? providedName : await askTextDialog('שם הקטגוריה החדשה');
  if (!name || !name.trim()) return;
  const trimmed = name.trim();
  if (!customTopicCategories.includes(trimmed) && !TOPIC_CATEGORY_KEYWORDS[trimmed]) {
@@ -4268,8 +4778,8 @@ function updateMainCategorySuggestion() {
 // שינוי שם קטגוריה - עובד גם על קטגוריות מובנות (מבוססות מילות-מפתח) וגם על מותאמות-אישית.
 // לקטגוריה מובנית: משייכים במפורש (override) כל נושא שמסווג אליה כרגע לשם החדש, כי אי אפשר
 // "לשנות שם" לרשימת מילות-המפתח עצמה בפועל - רק לנושאים שכבר קיימים תחתיה.
-function renameTopicCategory(oldName) {
- const newName = prompt(`שם חדש לקטגוריה "${oldName}":`, oldName);
+async function renameTopicCategory(oldName) {
+ const newName = await askTextDialog(`שם חדש לקטגוריה "${oldName}"`, oldName);
  if (!newName || !newName.trim() || newName.trim() === oldName) return;
  const trimmed = newName.trim();
  const allTopics = new Set();
@@ -4496,12 +5006,15 @@ function renderUnifiedLibrary(lib, filtered) {
  });
  const items = [...new Set([...(note.sources || []), ...(note.authors || [])])];
  items.forEach(item => {
+ if (!item || item === 'כללי' || item === 'לא צוין מחבר') return;
  const folder = classifyLibraryItem(item);
- if (folder && buckets[folder]) {
- if (!buckets[folder][item]) buckets[folder][item] = [];
- buckets[folder][item].push({ note, term: item });
+ // שם מסכת כ"מקור" כבר מופיע תחת ש"ס לפי המיקום - לא מכפילים אותו ב"לא משויך"
+ if (!folder && SHAS_ORDER.includes(String(item).replace(/^(מסכת|מס')\s+/, '').trim())) return;
+ // מחבר/ספר שלא זוהה אוטומטית לא "נעלם" יותר - נכנס ל"לא משויך" בשמו, ומשם אפשר לשייך אותו לתיקייה
+ const target = (folder && buckets[folder]) ? folder : UNCLASSIFIED_KEY;
+ if (!buckets[target][item]) buckets[target][item] = [];
+ buckets[target][item].push({ note, term: item });
  anyClassified = true;
- }
  });
  if (!anyClassified) {
  if (!buckets[UNCLASSIFIED_KEY]['שונות']) buckets[UNCLASSIFIED_KEY]['שונות'] = [];
@@ -4510,25 +5023,37 @@ function renderUnifiedLibrary(lib, filtered) {
  });
 
  const allFolderDefs = [...FOLDER_DEFS, { key: UNCLASSIFIED_KEY, icon: '', color: '#a89882' }];
- let html = `<div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
- <button onclick="addLibraryFolder()" style="width:auto; padding:6px 14px; font-size:12px; margin:0; background:#805ad5;">הוסף תיקיית משנה מותאמת אישית</button>
+ let html = `<div class="library-toolbar">
+ <button onclick="addLibraryFolder()" class="btn-soft">＋ הוסף תיקייה</button>
  </div>`;
 
  // כפתורי בחירת תיקייה ראשית - גדולים וברורים, לא רשימה מקופלת
  html += `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">`;
  let anyFolderHasContent = false;
  allFolderDefs.forEach(f => {
- const count = Object.values(buckets[f.key] || {}).reduce((s, arr) => s + arr.length, 0);
- if (!count) return;
- anyFolderHasContent = true;
+ const count = new Set(Object.values(buckets[f.key] || {}).flatMap(arr => arr.map(e => e.note.id))).size;
+ const isCustom = libraryFolders.includes(f.key);
+ if (!count && !isCustom) return;
+ if (count) anyFolderHasContent = true;
  const isActive = activeLibraryFolder === f.key;
- html += `<button onclick="selectLibraryFolder('${jsAttrArg(f.key)}')" style="width:auto; margin:0; padding:12px 20px; font-size:14px; border-radius:10px; background:${isActive ? f.color : '#f3e8d3'}; color:${isActive ? 'white' : '#6b5b4b'};">${escapeHtml(f.key)} <span style="opacity:0.85; font-size:12px;">(${count})</span></button>`;
+ html += `<button class="folder-tab ${isActive ? 'active' : ''}" onclick="selectLibraryFolder('${jsAttrArg(f.key)}')" style="--folder-color:${f.color};">${escapeHtml(f.key)} <span class="folder-count">${count}</span></button>`;
  });
  html += `</div>`;
 
- if (!anyFolderHasContent) {
+ if (!anyFolderHasContent && !libraryFolders.includes(activeLibraryFolder)) {
  lib.innerHTML = html + '<p class="no-results">עדיין אין חידושים מסווגים.</p>';
  return;
+ }
+
+ // תיקייה שהמשתמש הוסיף - גם כשהיא ריקה מציגים אותה, עם הסבר איך משייכים אליה וכפתורי עריכה
+ if (activeLibraryFolder && libraryFolders.includes(activeLibraryFolder)) {
+ html += `<div class="custom-folder-bar"><span>תיקייה אישית: <b>${escapeHtml(activeLibraryFolder)}</b></span>
+ <button class="btn-soft" onclick="renameLibraryFolder('${jsAttrArg(activeLibraryFolder)}')">✏️ שנה שם</button>
+ <button class="btn-soft btn-danger-soft" onclick="deleteLibraryFolder('${jsAttrArg(activeLibraryFolder)}')">🗑️ מחק תיקייה</button></div>`;
+ if (!buckets[activeLibraryFolder] || !Object.keys(buckets[activeLibraryFolder]).length) {
+ lib.innerHTML = html + `<div class="empty-state"><div class="empty-state-icon">📁</div><p>התיקייה "${escapeHtml(activeLibraryFolder)}" עדיין ריקה.</p><p style="font-size:13px;">כדי להכניס אליה ספר או מחבר: פתחו תיקייה אחרת (למשל "לא משויך"), לחצו על שם הספר או המחבר, ובחרו בתיבה "שייך לתיקייה" את "${escapeHtml(activeLibraryFolder)}".</p></div>`;
+ return;
+ }
  }
 
  // אם אין תיקייה פעילה (או שהריקה) - בוחרים אוטומטית את הראשונה שיש בה תוכן
@@ -4542,7 +5067,7 @@ function renderUnifiedLibrary(lib, filtered) {
  let itemNames = Object.keys(items);
  if (activeLibraryFolder === 'ש"ס') itemNames.sort((a, b) => SHAS_ORDER.indexOf(a) - SHAS_ORDER.indexOf(b));
  else if (activeLibraryFolder === 'ראשונים' || activeLibraryFolder === 'אחרונים') itemNames.sort((a, b) => getAuthorChronoRank(a) - getAuthorChronoRank(b) || a.localeCompare(b, 'he'));
- else itemNames.sort((a, b) => a.localeCompare(b, 'he'));
+ else itemNames.sort((a, b) => (a === 'שונות') - (b === 'שונות') || a.localeCompare(b, 'he'));
 
  // פריטים בתוך התיקייה הפעילה - כ"צ'יפים"גמישים שנשברים לשורות. מוגבל בגובה עם גלילה פנימית
  // וסינון מיידי (כמו ב"נושאים") - כדי שלא "ישתלט"על המסך גם עם הרבה פריטים (הרבה ראשונים/אחרונים)
@@ -4630,7 +5155,7 @@ function renderUnifiedLibrary(lib, filtered) {
  }
 
  // שיוך ידני אפשרי רק לפריטים שאינם ש"ס (ש"ס מזוהה אוטומטית מהמיקום שנמצא בטקסט, לא ניתן לשינוי ידני)
- if (activeLibraryFolder !== 'ש"ס' && activeLibraryItem) {
+ if (activeLibraryFolder !== 'ש"ס' && activeLibraryItem && !(activeLibraryFolder === UNCLASSIFIED_KEY && activeLibraryItem === 'שונות')) {
  const allOptions = [UNCLASSIFIED_KEY, ...FOLDER_DEFS.map(f => f.key)];
  const opts = allOptions.map(f => `<option value="${escapeHtml(f)}" ${activeLibraryFolder === f ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('');
  html += `<div style="margin-bottom:10px; font-size:12px; color:#6b5b4b; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">שייך את "<b>${escapeHtml(activeLibraryItem)}</b>"לתיקייה:
@@ -5711,7 +6236,7 @@ let kuntresItems = [];
 // שלא יסמן בטעות ראשי תיבות, מונחי ארמית, או מינוח הלכתי מקובל כ"שגיאה". רק מציע - לא משנה כלום
 // אוטומטית, כדי לא לגעת בתוכן בלי אישור מפורש של המשתמש.
 async function checkKuntresSpelling() {
- const key = document.getElementById('apiKey').value.trim();
+ const key = getPrimaryGeminiKey();
  if (!key) { alert('צריך מפתח API כדי להשתמש בתכונה הזו ( הגדרות).'); return; }
  const chosen = kuntresItems.filter(i => i.included).map(i => notes.find(n => n.id === i.id)).filter(Boolean);
  if (!chosen.length) { alert('אין חידושים לבדוק.'); return; }
@@ -7174,7 +7699,7 @@ function readWordFileAsHtml(file) {
 // (אחרי כל הניתוחים) יש כפתור אחד לשמור את כולם יחד, אחרי שסקרת אותם.
 let pendingBatchNotes = [];
 async function autoProcessWordQueue() {
- const key = document.getElementById('apiKey').value.trim();
+ const key = getPrimaryGeminiKey();
  if (!key) { alert('צריך מפתח API כדי לנתח אוטומטית ( הגדרות).'); return; }
  if (!wordQueue.length) return;
  const deepMode = document.getElementById('deepAnalysisToggle') && document.getElementById('deepAnalysisToggle').checked;
@@ -7209,6 +7734,7 @@ async function autoProcessWordQueue() {
  const text = (tmp.innerText || tmp.textContent || '').trim();
  if (!text) throw new Error('הקובץ ריק או שלא ניתן לחלץ ממנו טקסט');
  const result = await analyzeTextData(key, text, deepMode);
+ try { const tmpA = { text, refs: result.refs, sources: result.sources }; await pinpointShasRefs(tmpA); result.refs = tmpA.refs; result.sources = tmpA.sources; } catch (e) {}
  pendingBatchNotes.push({
  id: Date.now() + idx, text, html, noteType: 'חידוש',
  sources: result.sources, authors: result.authors, topics: result.topics, refs: result.refs,
@@ -7274,7 +7800,7 @@ function importWord(e) {
  mammoth.convertToHtml({ arrayBuffer: event.target.result })
  .then(function(result) {
  setEditorContent(cleanImportedWordArtifacts(result.value), null);
- status.textContent = 'הטקסט מהקובץ הוזן לתיבה עם העיצוב המקורי. אפשר עכשיו ללחוץ "סרוק ונתח".';
+ status.textContent = 'הטקסט מהקובץ הוזן לתיבה עם העיצוב המקורי. אפשר עכשיו ללחוץ "נתח וזהה מקורות".';
  })
  .catch(function(err) {
  status.textContent = 'שגיאה בקריאת הקובץ: ' + err.message;
