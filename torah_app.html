@@ -3951,7 +3951,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.4.3';
 const APP_VERSION_DATE = '25.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
@@ -4068,6 +4068,33 @@ async function applyDownloadedUpdate() {
  }
 }
 
+// הורדת העדכון דרך הדפדפן ומסירתו לשרת המקומי. מחזיר את מספר הגרסה, או null אם השרת ישן מדי
+async function stageUpdateViaBrowser() {
+ const base = UPDATE_URL.replace(/[^/]+$/, '');
+ const vr = await fetch(UPDATE_URL + '?t=' + Date.now(), { cache: 'no-store' });
+ if (!vr.ok) throw new Error('version.json HTTP ' + vr.status);
+ const info = await vr.json();
+ const names = (info.files || ['torah_app.html']).map(f => typeof f === 'string' ? f : f.name);
+ const files = {};
+ for (const name of names) {
+ const fr = await fetch(base + encodeURIComponent(name) + '?t=' + Date.now(), { cache: 'no-store' });
+ if (!fr.ok) throw new Error(name + ' HTTP ' + fr.status);
+ const buf = new Uint8Array(await fr.arrayBuffer());
+ let bin = '';
+ for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+ files[name] = btoa(bin);
+ }
+ const r = await fetch('/__torati/stage', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json', 'X-Torati': '1' },
+ body: JSON.stringify({ version: String(info.version), files })
+ });
+ if (r.status === 404) return null;
+ const d = await r.json().catch(() => ({}));
+ if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+ return d.version;
+}
+
 async function installUpdate() {
  const info = pendingUpdateInfo;
  if (!info) return;
@@ -4081,7 +4108,15 @@ async function installUpdate() {
  body: JSON.stringify({ url: UPDATE_URL })
  });
  const d = await r.json().catch(() => ({}));
- if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+ if (!r.ok || !d.ok) {
+ // השרת המקומי לא הצליח להוריד בעצמו (לרוב תוכנת הגנה/סינון שחוסמת את פייתון) - הדפדפן מוריד
+ // את הקבצים בעצמו ומעביר אותם לשרת, שבודק ושומר אותם בדיוק כמו בהורדה רגילה
+ let staged = null;
+ try { staged = await stageUpdateViaBrowser(); } catch (e2) { throw new Error((d.error || ('HTTP ' + r.status)) + ' | ' + e2.message); }
+ if (!staged) throw new Error(d.error || ('HTTP ' + r.status));
+ showUpdateReadyBanner(staged);
+ return;
+ }
  showUpdateReadyBanner(d.version);
  } catch (e) {
  if (btn) { btn.disabled = false; btn.textContent = 'נסה שוב'; }

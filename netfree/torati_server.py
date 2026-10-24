@@ -12,6 +12,7 @@ import re
 import shutil
 import socket
 import socketserver
+import base64
 import sys
 import time
 import urllib.request
@@ -77,6 +78,16 @@ def download_update(update_url):
         if sha and hashlib.sha256(data).hexdigest().lower() != sha.lower():
             raise ValueError('הקובץ %s הגיע פגום (בדיקת תקינות נכשלה)' % name)
         downloaded[name] = data
+    return stage_update(version, downloaded)
+
+
+def stage_update(version, downloaded):
+    """בודק ושומר את קבצי הגרסה החדשה בתיקיית ההמתנה (גם כשהדפדפן הוריד אותם בעצמו)."""
+    for name in downloaded:
+        if not safe_name(name):
+            raise ValueError('שם קובץ לא חוקי: %r' % name)
+        if len(downloaded[name]) > MAX_FILE:
+            raise ValueError('קובץ גדול מדי')
     html = downloaded.get('torah_app.html')
     if html is not None and ("APP_VERSION = '%s'" % version) not in html.decode('utf-8', 'replace'):
         raise ValueError('הקובץ שהורד לא תואם לגרסה %s' % version)
@@ -1054,6 +1065,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     raise ValueError('כתובת עדכון לא חוקית')
                 result = download_update(url)
                 print('Update %s downloaded, will be applied on next start' % result['version'])
+            elif self.path.startswith('/__torati/stage'):
+                # כשהשרת לא מצליח להוריד בעצמו (למשל תוכנת הגנה שחוסמת את פייתון), הדפדפן מוריד
+                # את הקבצים בעצמו ושולח אותם לכאן; הבדיקות והשמירה זהות להורדה רגילה
+                length = int(self.headers.get('Content-Length') or 0)
+                if length <= 0 or length > 80 * 1024 * 1024:
+                    raise ValueError('בקשה לא תקינה')
+                req = json.loads(self.rfile.read(length).decode('utf-8'))
+                files = {str(k): base64.b64decode(v) for k, v in (req.get('files') or {}).items()}
+                if not files:
+                    raise ValueError('לא התקבלו קבצים')
+                result = stage_update(str(req.get('version') or ''), files)
+                print('Update %s received from the app, will be applied on next start' % result['version'])
             elif self.path.startswith('/__torati/otzaria/'):
                 length = int(self.headers.get('Content-Length') or 0)
                 req = json.loads(self.rfile.read(length).decode('utf-8') or '{}') if length else {}
