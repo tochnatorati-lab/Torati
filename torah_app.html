@@ -221,17 +221,18 @@
  html { scroll-behavior: smooth; }
  body { font-family: var(--ui-font); padding: 0 0 40px 0; line-height: 1.55; -webkit-font-smoothing: antialiased;
   background-color: var(--bg-body);
-  background-image: url('bg-watermark.png'), radial-gradient(1200px 500px at 50% -120px, var(--gold-soft), transparent 70%), linear-gradient(180deg, var(--bg-body) 0%, var(--bg-body-2) 100%);
-  background-size: 520px auto, 100% 100%, cover; background-position: center 120px, top center, center; background-repeat: no-repeat; background-attachment: fixed; }
- [data-theme="dark"] body { background-image: radial-gradient(1200px 500px at 50% -120px, var(--gold-soft), transparent 70%), linear-gradient(180deg, var(--bg-body) 0%, var(--bg-body-2) 100%); }
+  /* רקע: תמונת הספרייה מתוך הלוגו, על כל המסך, מתחת לשכבה בהירה שמשאירה את הטקסט קריא */
+  background-image: linear-gradient(180deg, rgba(251,243,227,0.60) 0%, rgba(247,238,220,0.70) 100%), url('bg-library.jpg');
+  background-size: cover, cover; background-position: center, center; background-repeat: no-repeat; background-attachment: fixed; }
+ [data-theme="dark"] body { background-image: linear-gradient(180deg, rgba(28,22,16,0.62) 0%, rgba(20,16,12,0.74) 100%), url('bg-library.jpg'); }
  ::selection { background: var(--gold-soft); }
 
  /* ---- כותרת עליונה ---- */
  .header { position: relative; margin: 0 0 28px 0; padding: 18px 24px 26px; text-align: center;
-  background: linear-gradient(180deg, rgba(255,253,247,0.92), rgba(255,250,238,0.75));
+  background: linear-gradient(180deg, rgba(255,253,247,0.78), rgba(255,250,238,0.55));
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--line); box-shadow: 0 6px 24px -14px rgba(60,40,15,0.35); }
- [data-theme="dark"] .header { background: linear-gradient(180deg, rgba(40,34,28,0.95), rgba(30,26,22,0.85)); }
+ [data-theme="dark"] .header { background: linear-gradient(180deg, rgba(40,34,28,0.82), rgba(30,26,22,0.6)); }
  .header::after { content: ""; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 220px; height: 3px; border-radius: 3px;
   background: linear-gradient(90deg, transparent, var(--accent), var(--gold), var(--accent), transparent); }
  .header-tools { position: absolute; top: 16px; left: 20px; margin: 0; gap: 10px; }
@@ -3951,7 +3952,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 const APP_VERSION_DATE = '25.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;

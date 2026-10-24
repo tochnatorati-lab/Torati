@@ -1,10 +1,11 @@
 // Service Worker - שומר גרסה מקומית (cache) של קבצי האפליקציה כדי שתעבוד גם בלי אינטרנט
 // לאחר הפעם הראשונה שבה היא נטענה בזמן שהיה חיבור.
-const CACHE_NAME = 'torah-app-cache-v8';
+const CACHE_NAME = 'torah-app-cache-v9';
 const APP_SHELL = [
     './torah_app.html',
     './manifest.json',
     './icon-192.png',
+    './bg-library.jpg',
     './icon-512.png',
     'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
