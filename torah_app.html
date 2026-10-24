@@ -221,10 +221,9 @@
  html { scroll-behavior: smooth; }
  body { font-family: var(--ui-font); padding: 0 0 40px 0; line-height: 1.55; -webkit-font-smoothing: antialiased;
   background-color: var(--bg-body);
-  /* רקע: תמונת הספרייה מתוך הלוגו, על כל המסך, מתחת לשכבה בהירה שמשאירה את הטקסט קריא */
-  background-image: linear-gradient(180deg, rgba(251,243,227,0.86) 0%, rgba(247,238,220,0.90) 100%), url('bg-library.png');
-  background-size: cover, cover; background-position: center, center; background-repeat: no-repeat; background-attachment: fixed; }
- [data-theme="dark"] body { background-image: linear-gradient(180deg, rgba(36,31,26,0.86) 0%, rgba(28,24,21,0.90) 100%), url('bg-library.png'); }
+  /* רקע בצבע אחיד ונקי */
+  background-image: none; }
+ [data-theme="dark"] body { background-image: none; background-color: var(--bg-body); }
  ::selection { background: var(--gold-soft); }
 
  /* ---- כותרת עליונה ---- */
@@ -254,7 +253,7 @@
 
  /* ---- פריסה וכרטיסים ---- */
  .container { max-width: 1320px; gap: 24px; padding: 0 20px; box-sizing: border-box; }
- .card { padding: 26px 28px; border-radius: var(--radius-lg); border: 1px solid var(--line); box-shadow: var(--shadow); background: color-mix(in srgb, var(--bg-card) 96%, transparent); position: relative; }
+ .card { padding: 26px 28px; border-radius: var(--radius-lg); border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--bg-card); position: relative; }
  .card::before { content: ""; position: absolute; top: 0; right: 28px; left: 28px; height: 3px; border-radius: 0 0 4px 4px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.55; }
  h2 { font-family: var(--display-font); font-weight: 700; font-size: 1.55rem; color: var(--ink); border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 18px; letter-spacing: 0.3px; }
  [data-theme="dark"] h2 { color: #f0dca8; }
@@ -3951,7 +3950,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.4.4';
+const APP_VERSION = '1.4.5';
 const APP_VERSION_DATE = '25.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
@@ -4006,6 +4005,11 @@ async function checkForUpdates(manual) {
  pendingUpdateInfo = info;
  const local = await localUpdaterStatus();
  if (local && local.pending === String(info.version)) { showUpdateReadyBanner(info.version); if (manual) document.getElementById('settingsModal').style.display = 'none'; return; }
+ // עדכון אוטומטי: כשהתוכנה רצה דרך "הפעל_תוכנה", מורידים את העדכון לבד ברקע, והוא נכנס בפתיחה הבאה
+ if (local) {
+ try { showUpdateReadyBanner(await downloadUpdateViaLocalServer()); if (manual) document.getElementById('settingsModal').style.display = 'none'; return; }
+ catch (e) { /* נכשל - מציגים את הכפתור הרגיל */ }
+ }
  if (!manual && localStorage.getItem('torati_update_snoozed') === info.version) return;
  showUpdateBanner(info);
  if (manual) document.getElementById('settingsModal').style.display = 'none';
@@ -4095,6 +4099,22 @@ async function stageUpdateViaBrowser() {
  return d.version;
 }
 
+// מוריד את העדכון לתיקיית ההמתנה דרך השרת המקומי; אם השרת לא מצליח להוריד בעצמו (לרוב תוכנת
+// הגנה/סינון שחוסמת את פייתון) - הדפדפן מוריד את הקבצים ומעביר אותם לשרת. מחזיר את מספר הגרסה.
+async function downloadUpdateViaLocalServer() {
+ const r = await fetch('/__torati/download', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json', 'X-Torati': '1' },
+ body: JSON.stringify({ url: UPDATE_URL })
+ });
+ const d = await r.json().catch(() => ({}));
+ if (r.ok && d.ok) return d.version;
+ let staged = null;
+ try { staged = await stageUpdateViaBrowser(); } catch (e2) { throw new Error((d.error || ('HTTP ' + r.status)) + ' | ' + e2.message); }
+ if (!staged) throw new Error(d.error || ('HTTP ' + r.status));
+ return staged;
+}
+
 async function installUpdate() {
  const info = pendingUpdateInfo;
  if (!info) return;
@@ -4102,29 +4122,30 @@ async function installUpdate() {
  if (btn) { btn.disabled = true; btn.textContent = 'מוריד... נא להמתין'; }
  if (await localUpdaterStatus()) {
  try {
- const r = await fetch('/__torati/download', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json', 'X-Torati': '1' },
- body: JSON.stringify({ url: UPDATE_URL })
- });
- const d = await r.json().catch(() => ({}));
- if (!r.ok || !d.ok) {
- // השרת המקומי לא הצליח להוריד בעצמו (לרוב תוכנת הגנה/סינון שחוסמת את פייתון) - הדפדפן מוריד
- // את הקבצים בעצמו ומעביר אותם לשרת, שבודק ושומר אותם בדיוק כמו בהורדה רגילה
- let staged = null;
- try { staged = await stageUpdateViaBrowser(); } catch (e2) { throw new Error((d.error || ('HTTP ' + r.status)) + ' | ' + e2.message); }
- if (!staged) throw new Error(d.error || ('HTTP ' + r.status));
- showUpdateReadyBanner(staged);
- return;
- }
- showUpdateReadyBanner(d.version);
+ showUpdateReadyBanner(await downloadUpdateViaLocalServer());
  } catch (e) {
  if (btn) { btn.disabled = false; btn.textContent = 'נסה שוב'; }
  alert('הורדת העדכון לא הצליחה, והתוכנה נשארה בגרסה הקודמת (שום דבר לא נפגע).\nנסו שוב מאוחר יותר.\n\nפרטים לצורך תמיכה: ' + e.message);
  }
  return;
  }
- // אין שרת מקומי עם עדכון: מורידים את הקובץ החדש ומסבירים איך להחליף
+ // אין שרת מקומי: העדכון האוטומטי עובד רק כשהתוכנה נפתחת דרך "הפעל_תוכנה". מסבירים את זה קודם,
+ // ומשאירים הורדה ידנית רק כאפשרות משנית
+ if (!window.__toratiManualUpdate) {
+ if (btn) { btn.disabled = false; btn.textContent = '⬇️ הורד עדכון'; }
+ document.getElementById('genericModalTitle').textContent = 'איך מעדכנים בלי להחליף קבצים';
+ document.getElementById('genericModalContent').innerHTML = `
+ <p>כרגע התוכנה פתוחה ${location.protocol === 'file:' ? 'ישירות מהקובץ' : 'בלי החלון השחור שמפעיל אותה'}, ולכן היא לא יכולה לעדכן את עצמה.</p>
+ <ol style="line-height:1.9;">
+ <li>סגרו את התוכנה.</li>
+ <li>בתיקיית התוכנה, לחצו פעמיים על <strong>"הפעל_תוכנה"</strong> (נפתח חלון שחור - לא לסגור אותו).</li>
+ <li>העדכון יורד ונכנס לבד, בלי להחליף שום קובץ.</li>
+ </ol>
+ <p style="font-size:13px; color:#718096;">טיפ: כדאי ליצור קיצור דרך לשולחן העבודה ל"הפעל_תוכנה" (לחיצה ימנית ← שלח אל ← שולחן העבודה), ולפתוח תמיד דרכו.</p>
+ <button type="button" class="btn-soft" onclick="window.__toratiManualUpdate = true; document.getElementById('genericModal').style.display='none'; installUpdate();" style="margin-top:6px;">בכל זאת להוריד קובץ ולהחליף ידנית</button>`;
+ document.getElementById('genericModal').style.display = 'block';
+ return;
+ }
  try {
  const base = info.base_url || UPDATE_URL.replace(/[^\/]*$/, '');
  const res = await fetch(base + 'torah_app.html?t=' + Date.now(), { cache: 'no-store' });
