@@ -3978,8 +3978,8 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.4.8';
-const APP_VERSION_DATE = '25.10.2026';
+const APP_VERSION = '1.4.9';
+const APP_VERSION_DATE = '27.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
 
@@ -4005,8 +4005,21 @@ async function initUpdates() {
  // עדכון שהורד ועוד לא הוחל (למשל אם רק הדפדפן נסגר והשרת נשאר פתוח) - מחילים עכשיו, בפתיחה
  const local = await localUpdaterStatus();
  if (local && local.pending && compareVersions(local.pending, APP_VERSION) > 0) { applyDownloadedUpdate(); return; }
- const last = parseInt(localStorage.getItem('torati_update_checked') || '0', 10);
- if (Date.now() - last > 20 * 60 * 60 * 1000) setTimeout(() => checkForUpdates(false), 3000);
+ // בודקים עדכון בכל פתיחה, ושוב כל שעתיים כל עוד התוכנה פתוחה
+ setTimeout(() => checkForUpdates(false), 2500);
+ setInterval(() => checkForUpdates(false), 2 * 60 * 60 * 1000);
+}
+// האם אפשר להחיל עדכון ולרענן עכשיו בלי להפריע: אין טקסט בכתיבה, אין ניתוח פתוח ואין חלון פתוח
+function isIdleForAutoUpdate() {
+ try {
+ // הגנה מלולאה: אם כבר הוחל אוטומטית לפני פחות מ-10 דקות ועדיין רואים גרסה ישנה - לא מנסים שוב לבד
+ const lastAuto = parseInt(localStorage.getItem('torati_auto_applied_at') || '0', 10);
+ if (Date.now() - lastAuto < 10 * 60 * 1000) return false;
+ if ((getEditorText() || '').trim()) return false;
+ if (currentAnalysis) return false;
+ if ([...document.querySelectorAll('.modal-overlay')].some(m => getComputedStyle(m).display !== 'none')) return false;
+ return true;
+ } catch (e) { return false; }
 }
 
 async function fetchUpdateInfo() {
@@ -4032,10 +4045,18 @@ async function checkForUpdates(manual) {
  }
  pendingUpdateInfo = info;
  const local = await localUpdaterStatus();
- if (local && local.pending === String(info.version)) { showUpdateReadyBanner(info.version); if (manual) document.getElementById('settingsModal').style.display = 'none'; return; }
+ if (local && local.pending === String(info.version)) {
+ if (!manual && isIdleForAutoUpdate()) { localStorage.setItem('torati_auto_applied_at', String(Date.now())); applyDownloadedUpdate(); return; }
+ showUpdateReadyBanner(info.version); if (manual) document.getElementById('settingsModal').style.display = 'none'; return;
+ }
  // עדכון אוטומטי: כשהתוכנה רצה דרך "הפעל_תוכנה", מורידים את העדכון לבד ברקע, והוא נכנס בפתיחה הבאה
  if (local) {
- try { showUpdateReadyBanner(await downloadUpdateViaLocalServer()); if (manual) document.getElementById('settingsModal').style.display = 'none'; return; }
+ try {
+ const v = await downloadUpdateViaLocalServer();
+ // עדכון אוטומטי מלא: אם המשתמש לא באמצע כתיבה - מחילים מיד ומרעננים. אחרת - נכנס לבד בפתיחה הבאה
+ if (!manual && isIdleForAutoUpdate()) { localStorage.setItem('torati_auto_applied_at', String(Date.now())); applyDownloadedUpdate(); return; }
+ showUpdateReadyBanner(v); if (manual) document.getElementById('settingsModal').style.display = 'none'; return;
+ }
  catch (e) { /* נכשל - מציגים את הכפתור הרגיל */ }
  }
  if (!manual && localStorage.getItem('torati_update_snoozed') === info.version) return;
@@ -4150,7 +4171,10 @@ async function installUpdate() {
  if (btn) { btn.disabled = true; btn.textContent = 'מוריד... נא להמתין'; }
  if (await localUpdaterStatus()) {
  try {
- showUpdateReadyBanner(await downloadUpdateViaLocalServer());
+ const v = await downloadUpdateViaLocalServer();
+ // המשתמש לחץ לעדכן - מחילים מיד, אלא אם יש טקסט באמצע כתיבה
+ if ((getEditorText() || '').trim() || currentAnalysis) showUpdateReadyBanner(v);
+ else applyDownloadedUpdate();
  } catch (e) {
  if (btn) { btn.disabled = false; btn.textContent = 'נסה שוב'; }
  alert('הורדת העדכון לא הצליחה, והתוכנה נשארה בגרסה הקודמת (שום דבר לא נפגע).\nנסו שוב מאוחר יותר.\n\nפרטים לצורך תמיכה: ' + e.message);
