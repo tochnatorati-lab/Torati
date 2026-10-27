@@ -2896,11 +2896,12 @@ async function pinpointShasRefs(analysis, onProgress) {
  }
  // מאחדים כפילויות שנוצרו מהתיקון
  const seen = new Set();
- analysis.refs = analysis.refs.filter(r => { const k = formatRef(r); if (seen.has(k)) return false; seen.add(k); return true; });
+ // (משנים את אותו מערך ולא מחליפים אותו - כדי שמקורות שמתווספים בינתיים משלב 2/3 לא ילכו לאיבוד)
+ analysis.refs.splice(0, analysis.refs.length, ...analysis.refs.filter(r => { const k = formatRef(r); if (seen.has(k)) return false; seen.add(k); return true; }));
  // מקור "מסכת X" שגוי ברשימת המקורות - מתקנים גם אותו
  if (changed && Array.isArray(analysis.sources)) {
  const shasNow = [...new Set(analysis.refs.filter(r => r.category === 'shas').map(r => r.book))];
- analysis.sources = analysis.sources.filter(s => !SHAS_ORDER.includes(s) || shasNow.includes(s) || textBooks.includes(s));
+ analysis.sources.splice(0, analysis.sources.length, ...analysis.sources.filter(s => !SHAS_ORDER.includes(s) || shasNow.includes(s) || textBooks.includes(s)));
  shasNow.forEach(b => { if (!analysis.sources.includes(b)) analysis.sources.push(b); });
  }
  return { messages, changed };
@@ -3041,8 +3042,10 @@ async function suggestRelatedBooksOnTopics() {
  listEl.innerHTML = books.map((b, idx) => `
  <div id="relatedBookItem_${idx}" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 0; border-bottom:1px solid #e9d8fd;">
  <span style="flex:1; min-width:200px;"><b>${escapeHtml(b.label || '')}</b>${b.location ? ' - <span style="color:#553c9a;">' + escapeHtml(b.location) + '</span>' : ''} <span style="font-size:11px; color:#805ad5;">(${escapeHtml(b.topic || '')})</span><br><span style="font-size:11px; color:#6b5b4b;">${escapeHtml(b.reason || '')}</span></span>
+ ${b.location ? `<button type="button" onclick="fetchAndShowStudyText('${jsAttrArg(JSON.stringify({ category: 'other', book: b.label || '', location: b.location }))}', 'relatedStudyText_${idx}')" style="width:auto; padding:4px 10px; font-size:11px; margin:0; background:#0987a0;">📖 הצג טקסט</button>` : ''}
  <button type="button" onclick="acceptRelatedBook(${idx})" style="width:auto; padding:4px 10px; font-size:11px; margin:0; background:#22543d;">הוסף כמקור</button>
  <button type="button" onclick="dismissRelatedBook(${idx})" style="width:auto; padding:4px 10px; font-size:11px; margin:0; background:#a89882;">התעלם</button>
+ ${b.location ? `<div id="relatedStudyText_${idx}" style="display:none; flex-basis:100%; margin-top:8px; padding:12px; background:#fdf6e9; border:1px solid #ecdfc7; border-radius:8px; max-height:220px; overflow-y:auto; line-height:1.7; font-size:13px;"></div>` : ''}
  </div>`).join('') + `<button type="button" onclick="acceptAllRelatedBooks()" style="margin-top:8px; background:#2c5282;">עדכן הכל (את מה שנשאר ברשימה)</button>`;
  } catch (err) {
  listEl.innerHTML = `<p style="font-size:12px; color:#c53030; margin:0;">שגיאה: ${escapeHtml(err.message)}</p>`;
@@ -3061,6 +3064,7 @@ function acceptRelatedBook(idx) {
  if (item.location) {
  if (!currentAnalysis.refs) currentAnalysis.refs = [];
  currentAnalysis.refs.push({ category: 'other', book: item.label, location: item.location });
+ autoCacheIdentifiedSources({ refs: [currentAnalysis.refs[currentAnalysis.refs.length - 1]], sources: [], authors: [] });
  document.getElementById('refsList').innerHTML += ` <span class="tag ref-tag">${escapeHtml(item.label)} — ${escapeHtml(item.location)}</span>`;
  }
  dismissRelatedBook(idx);
@@ -3974,7 +3978,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.4.7';
+const APP_VERSION = '1.4.8';
 const APP_VERSION_DATE = '25.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
@@ -5752,6 +5756,8 @@ function commentatorRefsForNote(note, name) {
  const explicit = (note.refs || []).filter(r => r.commentator && normalizeHeName(r.commentator) === n);
  if (explicit.length) return explicit.map(r => ({ ...stripCommentator(r), commentator: name, dh: r.dh || '' }));
  if (!isKnownCommentatorName(name)) return [];
+ // לספר שיש לו כבר מיקום משלו (למשל משלב 2 או 3) - לא ממציאים "פירוש שלו על הגמרא"
+ if ((note.refs || []).some(r => r && !r.commentator && r.category !== 'shas' && r.book && normalizeHeName(r.book) === n)) return [];
  const base = primaryBaseRefForNote(note);
  return base ? [{ ...stripCommentator(base), commentator: name }] : [];
 }
@@ -5765,7 +5771,7 @@ function autoCacheIdentifiedSources(analysis) {
  const refs = analysis.refs || [];
  const targets = new Map();
  const add = r => { const k = studyCacheKey(r); if (!targets.has(k)) targets.set(k, r); };
- refs.filter(r => !r.commentator && ((r.category === 'shas' && r.book && r.daf) || (r.category === 'chumash' && r.book && r.perek))).forEach(add);
+ refs.filter(r => !r.commentator && ((r.category === 'shas' && r.book && r.daf) || (r.category === 'chumash' && r.book && r.perek) || (r.category !== 'shas' && r.category !== 'chumash' && r.book && r.location))).forEach(add);
  const names = [...(analysis.sources || []), ...(analysis.authors || []), ...refs.filter(r => r.commentator).map(r => r.commentator)];
  names.forEach(name => commentatorRefsForNote(analysis, name).forEach(add));
  const allTargets = [...targets.values()];
