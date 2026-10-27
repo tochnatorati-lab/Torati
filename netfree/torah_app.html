@@ -1490,6 +1490,14 @@ function dismissLocationSuggestion(idx) {
  const el = document.getElementById(`locationItem_${idx}`);
  if (el) el.remove();
 }
+// מקורות/מחברים שעדיין אין להם מיקום ברשימת המיקומים - רק בשבילם שווה לשאול את ה-AI בשלב 2
+function sourcesMissingLocation(analysis) {
+ const refs = (analysis && analysis.refs) || [];
+ const have = new Set();
+ refs.forEach(r => { if (r.book) have.add(normalizeHeName(r.book)); if (r.commentator) have.add(normalizeHeName(r.commentator)); });
+ return [...new Set([...(analysis.sources || []), ...(analysis.authors || [])])]
+ .filter(s => s && s !== 'כללי' && s !== 'לא צוין מחבר' && !have.has(normalizeHeName(s)));
+}
 async function findLocationsForKnownSources() {
  const key = getPrimaryGeminiKey();
  if (!key) { alert('אנא הדבק מפתח API בשדה העליון.'); return; }
@@ -1800,6 +1808,8 @@ async function callGeminiRaw(key, prompt, generationConfig, retryCount, triedKey
  // הועלה מ-3 ל-5 ניסיונות, עם המתנה שגדלה בהדרגה בכל ניסיון נוסף (לא קבועה) - במכסה חינמית
  // עמוסה לפעמים לוקח קצת יותר זמן להתאושש מ-3 ניסיונות קצרים בלבד.
  const errMsg = (data.error && data.error.message) || '';
+ // מכסה יומית שנגמרה - אין טעם לחכות ולנסות שוב (זה רק מבזבז זמן). עוברים למפתח השני אם יש
+ const isDailyQuota = res.status === 429 && /PerDay|per day|daily/i.test(JSON.stringify(data.error || {}));
  const isRateLimit = res.status === 429;
  const isOverloaded = res.status === 503 || /overloaded|high demand/i.test(errMsg);
  const isBadKey = data.error && (res.status === 400 || res.status === 401 || res.status === 403) && /api key|API_KEY|permission|unauthori/i.test(errMsg);
@@ -1809,6 +1819,9 @@ async function callGeminiRaw(key, prompt, generationConfig, retryCount, triedKey
  const statusEl0 = document.getElementById('loading');
  if (statusEl0) statusEl0.textContent = `🔁 עומס על מפתח ה-API - עובר למפתח ${geminiActiveKeyIndex + 1}...`;
  return callGeminiRaw(key, prompt, generationConfig, retryCount, triedKeys + 1);
+ }
+ if (isDailyQuota) {
+ throw new Error('המכסה היומית החינמית של מפתח ה-API נגמרה' + (allKeys.length > 1 ? ' (בשני המפתחות)' : '') + '. היא מתחדשת לבד מחר. אפשר להוסיף מפתח נוסף בהגדרות.');
  }
  if ((isRateLimit || isOverloaded) && retryCount < 5) {
  let waitSeconds = isOverloaded ? 6 : 5;
@@ -2015,7 +2028,7 @@ async function analyzeText() {
  // לא רק את שני השלבים (חשיבה+JSON) שכבר כלולים. ניתוח רגיל נשאר קריאה בודדת ופשוטה בכוונה,
  // כדי לצמצם עומס מצטבר על המכסה החינמית.
  // המתנה קצרה לפני השרשור, כדי לתת רגע-נשימה בין הקריאות ולצמצם סיכוי לפגיעה במכסה.
- if (deepMode) {
+ if (deepMode && sourcesMissingLocation(currentAnalysis).length) {
  setTimeout(() => { findLocationsForKnownSources(); }, 1500);
  }
 
@@ -2826,6 +2839,8 @@ async function pinpointShasRefs(analysis, onProgress) {
  tasks.push({ ref: null, phrase: d.phrase, comm: d.commentator, nearDaf });
  });
  if (!tasks.length) return { messages, changed };
+ // חיסכון במכסת ה-AI: לכל היותר שאלה ממוקדת אחת לכל ניתוח
+ let aiQuestionsLeft = 1;
 
  for (let ti = 0; ti < tasks.length; ti++) {
  const t = tasks[ti];
@@ -2853,12 +2868,6 @@ async function pinpointShasRefs(analysis, onProgress) {
  let found = null;
  // 1) המסכתות שה-AI הציע / שמוזכרות בטקסט, בדפים שהוזכרו
  for (const b of books) { for (const d of dafOpts) { found = await tryAt(b, d.daf, d.amud, t.comm); if (found) break; } if (found) break; }
- // 2) שאלה ממוקדת ל-AI
- if (!found) {
- if (onProgress) onProgress(`הד"ה "${t.phrase}" לא נמצא במקום שזוהה - בודק אפשרויות נוספות...`);
- const cands = await askAiShasCandidates(t.phrase, t.comm, (dafOpts[0] || {}).daf, (dafOpts[0] || {}).amud, analysis.text);
- for (const c of cands) { found = await tryAt(c.book, c.daf, c.amud, t.comm || c.commentator); if (found) break; }
- }
  // 3) סריקת אותו דף בכל הש"ס (רק כשאוצריא מותקנת במחשב)
  if (!found && fullScanOk && dafOpts.length) {
  for (const d of dafOpts.slice(0, 2)) {
@@ -2868,6 +2877,13 @@ async function pinpointShasRefs(analysis, onProgress) {
  if (hits.length === 1) { found = hits[0]; break; }
  if (hits.length > 1) { messages.push(`⚠ ד"ה "${t.phrase}" נמצא ביותר ממסכת אחת בדף ${d.daf} (${hits.map(h => h.book).join(', ')}) - כדאי לציין את שם המסכת`); found = 'ambiguous'; break; }
  }
+ }
+ // 3) שאלה ממוקדת ל-AI - רק אם הבדיקה בטקסט עצמו (שלא עולה מכסה) לא מצאה, ולכל היותר פעם אחת לניתוח
+ if (!found && aiQuestionsLeft > 0) {
+ aiQuestionsLeft--;
+ if (onProgress) onProgress(`הד"ה "${t.phrase}" לא נמצא במקום שזוהה - בודק אפשרויות נוספות...`);
+ const cands = await askAiShasCandidates(t.phrase, t.comm, (dafOpts[0] || {}).daf, (dafOpts[0] || {}).amud, analysis.text);
+ for (const c of cands) { found = await tryAt(c.book, c.daf, c.amud, t.comm || c.commentator); if (found) break; }
  }
  if (!found) { messages.push(`⚠ ד"ה "${t.phrase}" לא נמצא בטקסט הגמרא והמפרשים במקומות שנבדקו - כדאי לבדוק את המיקום ידנית`); continue; }
  if (found === 'ambiguous') continue;
@@ -3978,7 +3994,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.4.9';
+const APP_VERSION = '1.5.0';
 const APP_VERSION_DATE = '27.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
