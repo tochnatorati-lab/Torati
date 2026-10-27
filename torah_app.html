@@ -1061,8 +1061,7 @@
 </div>
 
 <script>
-// 'regular' = הגרסה הרגילה; 'netfree' = גרסה למי שספריא חסומה אצלו (לא פונה לספריא בכלל, מתעדכנת מתיקיית netfree)
-const TORATI_EDITION = 'regular';
+// מ-1.4.7 יש תוכנה אחת לכולם: אם ספריא חסומה (נטפרי וכדומה) התוכנה מזהה את זה לבד ועובדת רק מול אוצריא
 let currentAnalysis = null;
 let notes = JSON.parse(localStorage.getItem('torah_notes') || '[]');
 let currentTab = 'library';
@@ -2351,11 +2350,8 @@ function otzWebReachable() {
 // 'otzaria' - רק אוצריא;  'sefaria' - רק ספריא (כמו בגרסאות הקודמות)
 const TEXT_SOURCE_KEY = 'torati_text_source';
 const SOURCE_NAMES = { otzaria: 'אוצריא', 'otzaria-web': 'אוצריא', sefaria: 'ספריא' };
-// גרסת נטפרי: לא פונה לספריא בכלל - רק אוצריא (מהמחשב אם מותקנת, אחרת מהאינטרנט)
-const IS_NETFREE = TORATI_EDITION === 'netfree';
 function textSourcePref() {
  const v = localStorage.getItem(TEXT_SOURCE_KEY);
- if (IS_NETFREE) return v === 'otzaria' ? 'otzaria' : 'auto';
  return (v === 'otzaria' || v === 'sefaria') ? v : 'auto';
 }
 function fetchWithTimeout(url, opts, ms) {
@@ -2382,7 +2378,6 @@ async function otzariaStatus(force) {
 let sefariaReachableCache = null;
 // האם ספריא נפתחת מהמחשב הזה (אצל נטפרי וכדומה - לא). נבדק פעם אחת, ושוב אחרי 10 דקות אם נכשל
 function sefariaReachable() {
- if (IS_NETFREE) return Promise.resolve(false);
  if (sefariaReachableCache && (sefariaReachableCache.ok || Date.now() - sefariaReachableCache.at < 600000)) return sefariaReachableCache.p;
  const p = fetchWithTimeout('https://www.sefaria.org/api/name/' + encodeURIComponent('ברכות'), {}, 7000)
  .then(r => r.ok ? r.json().then(d => !!d) : false)
@@ -2398,7 +2393,7 @@ async function activeTextSources() {
  if (pref === 'sefaria') return ['sefaria'];
  const otz = await otzariaStatus();
  const otzList = otz.available ? ['otzaria', 'otzaria-web'] : ['otzaria-web'];
- if (pref === 'otzaria' || IS_NETFREE) return otzList;
+ if (pref === 'otzaria') return otzList;
  if (otz.available) return (await sefariaReachable()) ? ['otzaria', 'sefaria'] : otzList;
  return (await sefariaReachable()) ? ['sefaria', 'otzaria-web'] : ['otzaria-web'];
 }
@@ -2511,24 +2506,24 @@ async function fetchSourceText(ref) {
 async function refreshTextSourceSettings(force) {
  const sel = document.getElementById('textSourceSelect');
  const sefOpt = document.getElementById('textSourceSefariaOpt');
- if (sefOpt && IS_NETFREE) sefOpt.remove();
  if (sel) sel.value = textSourcePref();
  const st = document.getElementById('otzariaStatusLine');
  if (!st) return;
  st.innerHTML = 'בודק אם אוצריא מותקנת במחשב...';
+ await sefariaReachable();
  const otz = await otzariaStatus(force);
  const pathInput = document.getElementById('otzariaPathInput');
  if (pathInput && otz.configured && !pathInput.value) pathInput.value = otz.configured;
  if (otz.available) {
  st.innerHTML = `<span style="color:#276749;">✓ ספריית אוצריא נמצאה במחשב (${(otz.books || 0).toLocaleString('he-IL')} ספרים).</span><br><span style="font-size:11px; color:#718096; direction:ltr; unicode-bidi:embed;">${escapeHtml(otz.path || '')}</span>`;
  } else if (otz.noServer) {
- st.innerHTML = '<span style="color:#c05621;">אוצריא שבמחשב לא בשימוש כרגע, כי החלק שמחבר אליה לא פועל. כדי לתקן: סגרו את תורתי ולחצו פעם אחת על "הפעל_תוכנה" בתיקיית התוכנה. מאז הוא יעלה לבד עם הדלקת המחשב, ואפשר יהיה לפתוח את תורתי רגיל מהאייקון.</span><br><span style="font-size:11px; color:#718096;">בינתיים הבדיקה נעשית מול ספריית אוצריא באינטרנט' + (IS_NETFREE ? '' : ' או ספריא') + '.</span>';
+ st.innerHTML = '<span style="color:#c05621;">אוצריא שבמחשב לא בשימוש כרגע, כי החלק שמחבר אליה לא פועל. כדי לתקן: סגרו את תורתי ולחצו פעם אחת על "הפעל_תוכנה" בתיקיית התוכנה. מאז הוא יעלה לבד עם הדלקת המחשב, ואפשר יהיה לפתוח את תורתי רגיל מהאייקון.</span><br><span style="font-size:11px; color:#718096;">בינתיים הבדיקה נעשית מול ספריית אוצריא באינטרנט' + (sefariaReachableCache && sefariaReachableCache.ok ? ' או ספריא' : '') + '.</span>';
  } else if (otz.error && /^open_failed/.test(otz.error)) {
  st.innerHTML = '<span style="color:#c05621;">ספריית אוצריא נמצאה במחשב, אבל לא הצלחנו לקרוא אותה. נסו לסגור את תוכנת אוצריא (אם היא באמצע עדכון ספרים - לחכות שיסתיים), ואז ללחוץ כאן למטה "שמור וחפש".</span><br><span style="font-size:11px; color:#718096; direction:ltr; unicode-bidi:embed;">' + escapeHtml(otz.error.slice(0, 300)) + '</span>';
  } else if (otz.error === 'zstd_missing') {
  st.innerHTML = '<span style="color:#c05621;">ספריית אוצריא נמצאה, אבל המחשב לא מצליח לפתוח את הקובץ הדחוס שלה. ודאו שתוכנת אוצריא עצמה מותקנת במחשב (לא רק תיקיית הספרים).</span>';
  } else {
- st.innerHTML = '<span style="color:#718096;">אוצריא לא נמצאה במחשב, לכן הבדיקה נעשית מול ספריית אוצריא באינטרנט' + (IS_NETFREE ? '' : ' או ספריא') + '. אם אוצריא מותקנת, אפשר לכתוב למטה את התיקייה שבה נמצאים הספרים (שם יש קובץ בשם seforim.db).</span>';
+ st.innerHTML = '<span style="color:#718096;">אוצריא לא נמצאה במחשב, לכן הבדיקה נעשית מול ספריית אוצריא באינטרנט' + (sefariaReachableCache && sefariaReachableCache.ok ? ' או ספריא' : '') + '. אם אוצריא מותקנת, אפשר לכתוב למטה את התיקייה שבה נמצאים הספרים (שם יש קובץ בשם seforim.db).</span>';
  }
 }
 // הפעלה אוטומטית של השרת המקומי עם הדלקת המחשב (רק כשהתוכנה רצה דרכו, ורק ב-Windows)
@@ -3668,13 +3663,13 @@ function getUpcomingShabbat() {
 // בעצמנו. חישוב עצמי של פרשת השבוע דורש התחשבות בסוג השנה (מעוברת/פשוטה), פרשות מחוברות, וימים
 // טובים שחלים בשבת - זה כבר פתור נכון ואמין אצל ספריא, אין טעם לשחזר את זה בעצמנו ולסכן טעויות.
 async function fetchUpcomingParasha() {
- if (TORATI_EDITION === 'netfree') return null;
+ if (!(await sefariaReachable())) return null;
  const shabbat = getUpcomingShabbat();
  const day = shabbat.getDate();
  const month = shabbat.getMonth() + 1;
  const year = shabbat.getFullYear();
  try {
- const res = await fetch(`https://www.sefaria.org/api/calendars?day=${day}&month=${month}&year=${year}`);
+ const res = await fetchWithTimeout(`https://www.sefaria.org/api/calendars?day=${day}&month=${month}&year=${year}`, {}, 10000);
  if (!res.ok) return null;
  const data = await res.json();
  const item = (data.calendar_items || []).find(c => c.title && c.title.en === 'Parashat Hashavua');
@@ -3685,10 +3680,10 @@ async function fetchUpcomingParasha() {
 }
 // שולף את הדף היומי של היום (לא של שבת קרובה - "היום"ממש) - אותה שיטה בדיוק, אותו API
 async function fetchTodaysDafYomi() {
- if (TORATI_EDITION === 'netfree') return null;
+ if (!(await sefariaReachable())) return null;
  const today = new Date();
  try {
- const res = await fetch(`https://www.sefaria.org/api/calendars?day=${today.getDate()}&month=${today.getMonth() + 1}&year=${today.getFullYear()}`);
+ const res = await fetchWithTimeout(`https://www.sefaria.org/api/calendars?day=${today.getDate()}&month=${today.getMonth() + 1}&year=${today.getFullYear()}`, {}, 10000);
  if (!res.ok) return null;
  const data = await res.json();
  const item = (data.calendar_items || []).find(c => c.title && c.title.en === 'Daf Yomi');
@@ -3979,7 +3974,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.4.6';
+const APP_VERSION = '1.4.7';
 const APP_VERSION_DATE = '25.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;

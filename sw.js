@@ -1,6 +1,6 @@
 // Service Worker - שומר גרסה מקומית (cache) של קבצי האפליקציה כדי שתעבוד גם בלי אינטרנט
 // לאחר הפעם הראשונה שבה היא נטענה בזמן שהיה חיבור.
-const CACHE_NAME = 'torah-app-cache-v14';
+const CACHE_NAME = 'torah-app-cache-v15';
 const APP_SHELL = [
     './torah_app.html',
     './manifest.json',
