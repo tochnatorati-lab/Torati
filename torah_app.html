@@ -499,6 +499,14 @@
  <p class="settings-row-note">התוכנה בודקת לבד פעם ביום אם יצאה גרסה חדשה. העדכון לא פוגע בחידושים השמורים.</p>
  </div>
 
+ <div class="settings-item" id="autostartRow" style="display:none;">
+ <div class="settings-row">
+ <span class="settings-row-label">הפעלה אוטומטית עם המחשב</span>
+ <span class="settings-row-control"><label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px;"><input type="checkbox" id="autostartToggle" onchange="setAutostart(this.checked)" style="width:auto; margin:0;"> פעיל</label></span>
+ </div>
+ <p class="settings-row-note">כשזה פעיל, החלק שמחבר את תורתי לאוצריא שבמחשב ולעדכונים עולה לבד ברקע כשהמחשב נדלק - ואפשר לפתוח את תורתי ישר מהאייקון, בלי "הפעל_תוכנה".</p>
+ </div>
+
  <div class="settings-item">
  <div class="settings-row">
  <span class="settings-row-label">מטמון תקוע / גרסה ישנה</span>
@@ -1273,7 +1281,7 @@ window.onload = function() {
  offerEditorRecoveryIfNeeded();
  initUpdates();
  refreshTextSourceSettings(false).then(updateVerifyButtonLabel).catch(() => {});
- document.getElementById('settingsGear').addEventListener('click', () => refreshTextSourceSettings(true).catch(() => {}));
+ document.getElementById('settingsGear').addEventListener('click', () => { refreshTextSourceSettings(true).catch(() => {}); refreshAutostartRow().catch(() => {}); });
 };
 
 // מציג בפינת המסך אם יש חיבור לאינטרנט (נחוץ לניתוח AI) או לא (עדיין אפשר לעיין ולערוך את הספריה)
@@ -2514,12 +2522,33 @@ async function refreshTextSourceSettings(force) {
  if (otz.available) {
  st.innerHTML = `<span style="color:#276749;">✓ ספריית אוצריא נמצאה במחשב (${(otz.books || 0).toLocaleString('he-IL')} ספרים).</span><br><span style="font-size:11px; color:#718096; direction:ltr; unicode-bidi:embed;">${escapeHtml(otz.path || '')}</span>`;
  } else if (otz.noServer) {
- st.innerHTML = '<span style="color:#718096;">אוצריא שבמחשב לא בשימוש (התוכנה לא נפתחה דרך "הפעל_תוכנה"). הבדיקה נעשית מול ספריית אוצריא באינטרנט' + (IS_NETFREE ? '' : ' או ספריא') + '.</span>';
+ st.innerHTML = '<span style="color:#c05621;">אוצריא שבמחשב לא בשימוש כרגע, כי החלק שמחבר אליה לא פועל. כדי לתקן: סגרו את תורתי ולחצו פעם אחת על "הפעל_תוכנה" בתיקיית התוכנה. מאז הוא יעלה לבד עם הדלקת המחשב, ואפשר יהיה לפתוח את תורתי רגיל מהאייקון.</span><br><span style="font-size:11px; color:#718096;">בינתיים הבדיקה נעשית מול ספריית אוצריא באינטרנט' + (IS_NETFREE ? '' : ' או ספריא') + '.</span>';
+ } else if (otz.error && /^open_failed/.test(otz.error)) {
+ st.innerHTML = '<span style="color:#c05621;">ספריית אוצריא נמצאה במחשב, אבל לא הצלחנו לקרוא אותה. נסו לסגור את תוכנת אוצריא (אם היא באמצע עדכון ספרים - לחכות שיסתיים), ואז ללחוץ כאן למטה "שמור וחפש".</span><br><span style="font-size:11px; color:#718096; direction:ltr; unicode-bidi:embed;">' + escapeHtml(otz.error.slice(0, 300)) + '</span>';
  } else if (otz.error === 'zstd_missing') {
  st.innerHTML = '<span style="color:#c05621;">ספריית אוצריא נמצאה, אבל המחשב לא מצליח לפתוח את הקובץ הדחוס שלה. ודאו שתוכנת אוצריא עצמה מותקנת במחשב (לא רק תיקיית הספרים).</span>';
  } else {
  st.innerHTML = '<span style="color:#718096;">אוצריא לא נמצאה במחשב, לכן הבדיקה נעשית מול ספריית אוצריא באינטרנט' + (IS_NETFREE ? '' : ' או ספריא') + '. אם אוצריא מותקנת, אפשר לכתוב למטה את התיקייה שבה נמצאים הספרים (שם יש קובץ בשם seforim.db).</span>';
  }
+}
+// הפעלה אוטומטית של השרת המקומי עם הדלקת המחשב (רק כשהתוכנה רצה דרכו, ורק ב-Windows)
+async function refreshAutostartRow() {
+ const row = document.getElementById('autostartRow');
+ if (!row) return;
+ const st = await localUpdaterStatus();
+ if (!st || !st.autostart_supported) { row.style.display = 'none'; return; }
+ row.style.display = '';
+ document.getElementById('autostartToggle').checked = !!st.autostart;
+}
+async function setAutostart(on) {
+ try {
+ const r = await fetch('/__torati/autostart', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Torati': '1' }, body: JSON.stringify({ on: !!on }) });
+ const d = await r.json().catch(() => ({}));
+ if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+ } catch (e) {
+ alert('לא הצלחנו לשנות את ההגדרה: ' + e.message);
+ }
+ refreshAutostartRow();
 }
 function setTextSourcePref(v) {
  localStorage.setItem(TEXT_SOURCE_KEY, v);
@@ -2537,7 +2566,7 @@ async function saveOtzariaPath() {
  otzariaStatusCache = null;
  await refreshTextSourceSettings(false);
  } catch (e) {
- st.innerHTML = '<span style="color:#c53030;">לא הצלחנו לפנות לשרת המקומי. פתחו את התוכנה דרך "הפעל_תוכנה".</span>';
+ st.innerHTML = '<span style="color:#c53030;">החלק שמחבר את תורתי לאוצריא לא פועל כרגע. סגרו את תורתי ולחצו פעם אחת על "הפעל_תוכנה" בתיקיית התוכנה - מאז הוא יעלה לבד עם הדלקת המחשב.</span>';
  }
 }
 async function updateVerifyButtonLabel() {
@@ -3950,7 +3979,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.4.5';
+const APP_VERSION = '1.4.6';
 const APP_VERSION_DATE = '25.10.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;

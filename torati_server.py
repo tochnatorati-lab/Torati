@@ -445,6 +445,50 @@ def save_settings(data):
     os.replace(tmp, SETTINGS_FILE)
 
 
+# ---------- הפעלה אוטומטית עם הדלקת המחשב (Windows) ----------
+# קובץ קטן בתיקיית "הפעלה" של Windows מפעיל את השרת ברקע (בלי חלון), כך שאפשר לפתוח את תורתי
+# ישר מהאייקון, ואוצריא שבמחשב והעדכונים עובדים. אפשר לכבות בהגדרות התוכנה.
+def _startup_file():
+    appdata = os.environ.get('APPDATA')
+    if os.name != 'nt' or not appdata:
+        return None
+    return os.path.join(appdata, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup', 'Torati-server.vbs')
+
+
+def autostart_enabled():
+    f = _startup_file()
+    return bool(f and os.path.isfile(f))
+
+
+def set_autostart(on):
+    f = _startup_file()
+    if not f:
+        return {'ok': False, 'error': 'אפשרי רק ב-Windows'}
+    s = load_settings()
+    s['autostart'] = bool(on)
+    save_settings(s)
+    if not on:
+        try:
+            os.remove(f)
+        except OSError:
+            pass
+        return {'ok': True, 'autostart': False}
+    exe = sys.executable or 'pythonw'
+    pyw = os.path.join(os.path.dirname(exe), 'pythonw.exe')
+    if not os.path.isfile(pyw):
+        pyw = exe
+    script = os.path.abspath(__file__)
+    q = lambda x: x.replace('"', '""')
+    run_cmd = '"""%s"" ""%s"""' % (q(pyw), q(script))
+    vbs = ('Set sh = CreateObject("WScript.Shell")\r\n'
+           'sh.CurrentDirectory = "%s"\r\n'
+           'sh.Run %s, 0, False\r\n') % (q(APP_DIR), run_cmd)
+    os.makedirs(os.path.dirname(f), exist_ok=True)
+    with open(f, 'w', encoding='utf-16', newline='') as fh:   # UTF-16 עם BOM - כדי ששמות תיקיות בעברית יעבדו
+        fh.write(vbs)
+    return {'ok': True, 'autostart': True}
+
+
 def _read_text_file(p):
     try:
         with open(p, encoding='utf-8-sig') as f:
@@ -542,25 +586,39 @@ def _candidate_library_dirs():
     return out
 
 
-def find_library(path=None):
-    """מחזיר ('db', נתיב_לקובץ) או ('txt', תיקיית_אוצריא) או (None, None)."""
+def find_libraries(path=None):
+    """כל הספריות שנמצאו, לפי סדר עדיפות: [('db', קובץ) / ('txt', תיקייה)]."""
+    out, seen = [], set()
+
+    def add(kind, p):
+        key = (kind, os.path.normcase(os.path.abspath(p)))
+        if key not in seen:
+            seen.add(key)
+            out.append((kind, p))
     for c in ([path] if path else _candidate_library_dirs()):
         if not c:
             continue
         if os.path.isfile(c) and c.lower().endswith('.db'):
-            return 'db', c
+            add('db', c)
+            continue
         if not os.path.isdir(c):
             continue
         for sub in ('', 'אוצריא', 'books', 'Otzaria', 'otzaria', 'ספרייה'):
             d = os.path.join(c, sub) if sub else c
             p = os.path.join(d, 'seforim.db')
             if os.path.isfile(p) and os.path.getsize(p) > 0:
-                return 'db', p
+                add('db', p)
         for sub in ('אוצריא', ''):
             d = os.path.join(c, sub) if sub else c
             if os.path.isdir(d) and any(os.path.isdir(os.path.join(d, x)) for x in ('תלמוד בבלי', 'תנך', 'תלמוד', 'הלכה')):
-                return 'txt', d
-    return None, None
+                add('txt', d)
+    return out
+
+
+def find_library(path=None):
+    """מחזיר ('db', נתיב_לקובץ) או ('txt', תיקיית_אוצריא) או (None, None)."""
+    found = find_libraries(path)
+    return found[0] if found else (None, None)
 
 
 # ---------- הספרייה עצמה ----------
@@ -602,8 +660,57 @@ class OtzariaLibrary:
                 last = e
         raise last
 
+    def _snapshot(self):
+        """עותק פרטי של הספרייה (כולל קובץ ה-wal), למקרה שאי אפשר לקרוא את המקור ישירות - למשל כשאוצריא
+        באמצע עדכון, או כשתיקיית אוצריא מוגנת מכתיבה ולכן השינויים האחרונים (wal) לא נקראים.
+        משמש שוב כל עוד הספרייה המקורית לא השתנתה."""
+        base = os.environ.get('LOCALAPPDATA') or APP_DIR
+        dest_dir = os.path.join(base, 'Torati', 'otzaria_copy')
+        os.makedirs(dest_dir, exist_ok=True)
+        parts = [p for p in (self.path, self.path + '-wal') if os.path.isfile(p)]
+        stamp = json.dumps([[os.path.basename(p), os.path.getsize(p), int(os.path.getmtime(p))] for p in parts])
+        stamp_file = os.path.join(dest_dir, 'source.json')
+        dest = os.path.join(dest_dir, 'seforim.db')
+        try:
+            with open(stamp_file, encoding='utf-8') as f:
+                if f.read() == stamp and os.path.isfile(dest):
+                    return dest
+        except OSError:
+            pass
+        need = sum(os.path.getsize(p) for p in parts)
+        if shutil.disk_usage(dest_dir).free < need * 1.2 + 200 * 1024 * 1024:
+            raise OSError('not enough free disk space to copy the Otzaria library')
+        print('Preparing a private copy of the Otzaria library (one time, may take a minute)...')
+        for name in ('seforim.db', 'seforim.db-wal', 'seforim.db-shm', 'source.json'):
+            try:
+                os.remove(os.path.join(dest_dir, name))
+            except OSError:
+                pass
+        shutil.copyfile(self.path, dest)
+        if os.path.isfile(self.path + '-wal'):
+            shutil.copyfile(self.path + '-wal', dest + '-wal')
+        db = sqlite3.connect(dest)
+        try:
+            db.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+        finally:
+            db.close()
+        with open(stamp_file, 'w', encoding='utf-8') as f:
+            f.write(stamp)
+        return dest
+
     def _open_db(self):
-        self.db = self._connect()
+        try:
+            self.db = self._connect()
+            self._load_db()
+        except sqlite3.DatabaseError as e:
+            print('Otzaria library: direct read failed (%r), trying a private copy...' % (e,))
+            self.books = []
+            copy = self._snapshot()
+            self.db = sqlite3.connect(copy, check_same_thread=False, timeout=10)
+            self._load_db()
+            self.copy_path = copy
+
+    def _load_db(self):
         tables = {r[0] for r in self.db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         self.tables = tables
         self.split = 'line_content' in tables
@@ -854,15 +961,20 @@ class OtzariaService:
             if self.lib is not None and not reload:
                 return self.lib
             self.lib, self.error = None, None
-            kind, path = find_library()
-            if not kind:
+            found = find_libraries()
+            if not found:
                 self.error = 'not_found'
                 return None
-            try:
-                self.lib = OtzariaLibrary(kind, path)
-            except Exception as e:
-                self.error = 'open_failed: %r' % (e,)
-                print('Otzaria library open failed:', repr(e))
+            errors = []
+            for kind, path in found:
+                try:
+                    self.lib = OtzariaLibrary(kind, path)
+                    break
+                except Exception as e:
+                    errors.append('%s: %r' % (path, e))
+                    print('Otzaria library open failed (%s):' % path, repr(e))
+            if self.lib is None:
+                self.error = 'open_failed: ' + ' | '.join(errors)
             return self.lib
 
     def status(self, reload=False):
@@ -1038,7 +1150,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if not self._local_only():
             return
         if self.path.startswith('/__torati/ping'):
-            return self._json(200, {'ok': True, 'updater': 2, 'otzaria': 1, 'version': current_version(), 'pending': pending_version()})
+            return self._json(200, {'ok': True, 'updater': 2, 'otzaria': 1, 'version': current_version(), 'pending': pending_version(),
+                                    'autostart': autostart_enabled(), 'autostart_supported': bool(_startup_file())})
         if self.path.startswith('/__torati/otzaria/status'):
             try:
                 return self._json(200, OTZARIA.status(reload='reload=1' in self.path))
@@ -1089,6 +1202,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 else:
                     return self.send_error(404)
                 return self._json(200, result)
+            elif self.path.startswith('/__torati/autostart'):
+                length = int(self.headers.get('Content-Length') or 0)
+                req = json.loads(self.rfile.read(length).decode('utf-8') or '{}') if length else {}
+                result = set_autostart(bool(req.get('on')))
             elif self.path.startswith('/__torati/apply'):
                 result = apply_pending() or {'ok': False, 'error': 'אין עדכון ממתין'}
                 if result.get('ok'):
@@ -1125,6 +1242,14 @@ def make_server():
 
 
 if __name__ == '__main__':
+    # כשרצים ברקע בלי חלון (pythonw) אין לאן להדפיס - מפנים את ההודעות לקובץ יומן קטן
+    if sys.stdout is None or sys.stderr is None:
+        try:
+            _log = open(os.path.join(APP_DIR, 'torati_log.txt'), 'w', encoding='utf-8', buffering=1)
+        except OSError:
+            _log = open(os.devnull, 'w')
+        sys.stdout = sys.stdout or _log
+        sys.stderr = sys.stderr or _log
     # עדכון שהורד בפעם הקודמת מוחל עכשיו, לפני שהתוכנה נפתחת
     try:
         done = apply_pending()
@@ -1139,6 +1264,16 @@ if __name__ == '__main__':
         sys.exit(0)
     print('Torati is running on http://localhost:%d/torah_app.html' % PORT)
     print('Do not close this window while using the app.')
+    # בפעם הראשונה: הפעלה אוטומטית עם הדלקת המחשב, כדי שאפשר יהיה לפתוח את תורתי ישר מהאייקון
+    try:
+        if _startup_file() and 'autostart' not in load_settings():
+            set_autostart(True)
+            print('Torati will now also start automatically in the background when the computer starts.')
+            print('(You can turn this off in the app: Settings.)')
+        elif load_settings().get('autostart'):
+            set_autostart(True)   # מרעננים - למקרה שתיקיית התוכנה הועברה למקום אחר
+    except Exception as e:
+        print('Autostart setup failed:', repr(e))
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
