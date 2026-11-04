@@ -124,6 +124,7 @@
  .author-tag { background: #feebc8; color: #744210; }
  .topic-tag { background: #e9d8fd; color: #44337a; }
  .ref-tag { background: #bee3f8; color: #2a4365; }
+ .tag.ref-tag { border-radius: 10px; max-width: 100%; white-space: normal; line-height: 1.6; }
  .draft-tag { background: #fefcbf; color: #744210; }
  .type-tag { background: #fed7d7; color: #822727; }
 
@@ -4079,7 +4080,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.5.4';
+const APP_VERSION = '1.5.5';
 const APP_VERSION_DATE = '04.11.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
@@ -4738,7 +4739,8 @@ function renderSearchResultCard(n, tokens, wordRange) {
  const refLabel = (n.refs && n.refs.length) ? n.refs.map(formatRef).join(' | ') : null;
  const typeTag = n.noteType ? `<span class="tag type-tag">${icon} ${n.noteType}</span>` : '';
  const draftTag = n.isDraft ? `<span class="tag draft-tag">טיוטה</span>` : '';
- const refTag = refLabel ? `<span class="tag ref-tag"> ${refLabel}</span>` : '';
+ // כל מיקום בתגית נפרדת - כדי שגם עם הרבה מפרשים לא תיווצר "בועה" ענקית אחת
+ const refTag = refLabel ? String(refLabel).split(' | ').map(x => `<span class="tag ref-tag">${x}</span>`).join(' ') : '';
  // כותרת שמוצגת כ-tooltip בהעברת עכבר על השורה - כדי לדעת מיד על איזה מסמך מדובר בלי לפתוח אותו
  const hoverTitle = extractOwnHeadingText(n.html) || `${n.noteType || 'חידוש'}${refLabel ? ' — ' + refLabel : ''}`;
 
@@ -6155,7 +6157,8 @@ function renderNoteCard(n, highlightKey, refLabel) {
  const icon = TYPE_ICONS[n.noteType] || '';
  const typeTag = n.noteType ? `<span class="tag type-tag">${icon} ${n.noteType}</span>` : '';
  const draftTag = n.isDraft ? `<span class="tag draft-tag">טיוטה</span>` : '';
- const refTag = refLabel ? `<span class="tag ref-tag"> ${refLabel}</span>` : '';
+ // כל מיקום בתגית נפרדת - כדי שגם עם הרבה מפרשים לא תיווצר "בועה" ענקית אחת
+ const refTag = refLabel ? String(refLabel).split(' | ').map(x => `<span class="tag ref-tag">${x}</span>`).join(' ') : '';
 
  // שורה קצרה וברורה: רק אייקון + תחילת הטקסט. כל התגיות (מיקום/סוג/מקורות/מחברים/נושאים)
  // עוברות לסוף המסמך, ומופיעות רק כשפותחים אותו.
@@ -6375,7 +6378,7 @@ function openFullscreenNote(noteId, tokens) {
  noteHtml += `<div>${bodyHtml}</div>`;
  }
  noteHtml += `<div style="margin-top:22px; padding-top:14px; border-top:1px solid #f3e8d3;">`;
- if (refLabel) noteHtml += `<span class="tag ref-tag"> ${escapeHtml(refLabel)}</span>`;
+ if (note.refs && note.refs.length) noteHtml += note.refs.map(r => `<span class="tag ref-tag">${escapeHtml(formatRef(r))}</span>`).join(' ');
  (note.sources || []).forEach(s => { noteHtml += `<span class="tag source-tag"> ${escapeHtml(s)} <span onclick="removeTagFromNote(${note.id}, 'sources', '${jsAttrArg(s)}'); openFullscreenNote(${note.id});" title="הסר תיוג זה מחידוש זה" style="cursor:pointer; opacity:0.6;">✖</span></span>`; });
  (note.authors || []).forEach(a => { noteHtml += `<span class="tag author-tag"> ${escapeHtml(a)} <span onclick="removeTagFromNote(${note.id}, 'authors', '${jsAttrArg(a)}'); openFullscreenNote(${note.id});" title="הסר תיוג זה מחידוש זה" style="cursor:pointer; opacity:0.6;">✖</span></span>`; });
  (note.topics || []).forEach(t => { noteHtml += `<span class="tag topic-tag"> ${escapeHtml(t)} <span onclick="removeTagFromNote(${note.id}, 'topics', '${jsAttrArg(t)}'); openFullscreenNote(${note.id});" title="הסר תיוג זה מחידוש זה" style="cursor:pointer; opacity:0.6;">✖</span></span>`; });
