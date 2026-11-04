@@ -3600,13 +3600,34 @@ function refSearchTokens(str) {
  const words = t.split(/[\s,\-–—|()]+/).filter(Boolean).filter(w => !['דף', 'על', 'עמוד', 'עמ', 'דה', 'מסכת', 'בדף'].includes(w));
  return words.map(w => w === 'א' ? '.' : w === 'ב' ? ':' : w);
 }
-function noteRefMatchesQuery(note, q) {
+function refMatchesQuery(r, q) {
  const qt = refSearchTokens(q);
- if (!qt.length || !(note.refs || []).length) return false;
- return note.refs.some(r => {
+ if (!qt.length || !r) return false;
  const rt = refSearchTokens(formatRef(r) + (r.amud ? (r.amud === 'ב' ? ' :' : ' .') : ''));
  return qt.every(w => rt.some(x => x === w || (w.length >= 3 && x.length >= 3 && normalizeHebrewForSearch(x) === normalizeHebrewForSearch(w))));
- });
+}
+function noteRefMatchesQuery(note, q) {
+ return (note.refs || []).some(r => refMatchesQuery(r, q));
+}
+// המקומות בתוך טקסט החידוש שבהם מוזכר מקור מסוים: הציטוט שה-AI שמר, הדיבור המתחיל, או שם המפרש -
+// רק מה שבאמת מופיע בטקסט (כדי שיהיה אפשר לסמן אותו ולקפוץ אליו)
+function refMentionTerms(note, r) {
+ const text = note.text || '';
+ const cands = [];
+ const quoteOf = name => ((note.sourceQuotes || []).find(x => x && x.source && name && normalizeHeName(x.source) === normalizeHeName(name)) || {}).quote;
+ [r.quote, quoteOf(r.commentator), quoteOf(r.book), r.dh, r.commentator].forEach(t => { if (t && String(t).trim().length >= 2) cands.push(String(t).trim()); });
+ return cands.filter(t => { try { return new RegExp(buildFlexibleRegex(t)).test(text); } catch (e) { return false; } }).slice(0, 3);
+}
+// פותח חידוש במסך מלא, ומיד את עמוד הלימוד על המקור המבוקש
+function openNoteAtRef(noteId, refJson, terms) {
+ let ref = null;
+ try { ref = JSON.parse(refJson); } catch (e) {}
+ openFullscreenNote(noteId, terms && terms.length ? terms : undefined);
+ if (!ref) return;
+ const k = studyCacheKey(ref);
+ let idx = currentStudyRefs.findIndex(x => studyCacheKey(x) === k);
+ if (idx === -1) { currentStudyRefs.push(ref); idx = currentStudyRefs.length - 1; }
+ activateStudySplit(idx);
 }
 function noteMatchesQuery(note, q, mode, scope) {
  mode = mode || 'smart';
@@ -4101,7 +4122,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.5.6';
+const APP_VERSION = '1.5.7';
 const APP_VERSION_DATE = '04.11.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
@@ -4751,6 +4772,16 @@ function renderSearchResults(lib, matched, q, rangeMap) {
 // כרטיס תוצאת חיפוש ייעודי: שורה קצרה וברורה (קטע מודגש בלבד), וכל התיוגים בתחתית ההרחבה
 function renderSearchResultCard(n, tokens, wordRange) {
  noteRowCounter++;
+ // חיפוש לפי מראה מקום: מסמנים בטקסט את המקום שבו המקור מוזכר, ומציעים לפתוח אותו ישירות
+ const q0 = (tokens || []).join(' ');
+ const refHits = (n.refs || []).filter(r => refMatchesQuery(r, q0));
+ let refBar = '';
+ if (refHits.length) {
+ const terms = [...new Set(refHits.flatMap(r => refMentionTerms(n, r)))];
+ if (terms.length) { tokens = terms; wordRange = null; }
+ refBar = `<div style="margin:0 0 8px 0; display:flex; gap:6px; flex-wrap:wrap;">` + refHits.map(r =>
+ `<button onclick="event.stopPropagation(); openNoteAtRef(${n.id}, '${jsAttrArg(JSON.stringify(r))}', ${JSON.stringify(refMentionTerms(n, r)).replace(/"/g, '&quot;')})" style="width:auto; padding:4px 10px; font-size:11px; margin:0; background:#0987a0;">📖 ${escapeHtml(formatRef(r))}</button>`).join('') + `</div>`;
+ }
  const rowId = `row_${n.id}_${noteRowCounter}`;
  const topAnchorId = `${rowId}_top`;
  const bottomAnchorId = `${rowId}_end`;
@@ -4770,7 +4801,7 @@ function renderSearchResultCard(n, tokens, wordRange) {
  ${bulkDeleteMode ? `<input type="checkbox" onclick="event.stopPropagation(); toggleBulkDeleteSelect(${n.id});" ${bulkDeleteSelection.has(n.id) ? 'checked' : ''} style="width:auto; margin:0;">` : ''}
  <span class="note-row-toggle">▶</span>
  <span class="note-row-icon">${icon}</span>
- <span class="note-row-preview">${previewHtml}</span>
+ <span class="note-row-preview">${refHits.length ? `<b style="color:#0987a0;">📍 ${escapeHtml(formatRef(refHits[0]))}</b> ` : ''}${previewHtml}</span>
  <span onclick="event.stopPropagation(); toggleFavorite(${n.id});" title="${n.favorite ? 'הסר מנעוצים' : 'נעץ'}" style="cursor:pointer; font-size:11px; flex-shrink:0; opacity:${n.favorite ? '0.75' : '0.25'};">📌</span>
  </div>
  <div class="note-full">
@@ -4779,6 +4810,7 @@ function renderSearchResultCard(n, tokens, wordRange) {
  <button onclick="event.stopPropagation(); openFullscreenNote(${n.id}, ${JSON.stringify(tokens).replace(/"/g, '&quot;')})" style="width:auto; padding:4px 10px; font-size:11px; margin:0; background:#6b5b4b;">מסך מלא</button>
  <button onclick="event.stopPropagation(); document.getElementById('${bottomAnchorId}').scrollIntoView({behavior:'smooth', block:'end'});" style="width:auto; padding:4px 10px; font-size:11px; margin:0; background:#a89882;">גלול לסוף המסמך</button>
  </div>
+ ${refBar}
  <div style="margin:0 0 10px 0; white-space:pre-wrap;">${fullHtml}</div>
  <div>
  ${refTag}${draftTag}${typeTag}
@@ -6392,6 +6424,7 @@ function openFullscreenNote(noteId, tokens) {
  if (tokens && tokens.length && !note.html) {
  // אין HTML עשיר - משתמשים בנתיב הטקסט-הפשוט הקיים (הוא כבר דואג לבריחה משלו, לא נוגעים בו כאן)
  noteHtml += `<div style="white-space:pre-wrap;">${highlightTerm(note.text, tokens)}</div>`;
+ linkifySourceMentions('', note, allShasRefs); // ממלא את רשימת המקורות לעמוד הלימוד גם במסלול הזה
  } else {
  let bodyHtml = note.html || escapeHtml(note.text).replace(/\n/g, '<br>');
  bodyHtml = linkifySourceMentions(bodyHtml, note, allShasRefs); // גם ממלא את currentStudyRefs
