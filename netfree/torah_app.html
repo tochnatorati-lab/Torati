@@ -716,6 +716,7 @@
  <option value="text">טקסט החידוש</option>
  <option value="authors">מחברים/מקורות</option>
  <option value="topics">נושאים</option>
+ <option value="location">מראה מקום</option>
  </select>
  <span style="font-size:12px; color:#6b5b4b;">סוג:</span>
  <select id="typeFilter" onchange="renderLibrary()" style="width:auto; font-size:12px; padding:5px;">
@@ -3589,11 +3590,30 @@ function textContainsFuzzyMatch(haystack, searchToken) {
  return words.some(w => fuzzyWordMatch(searchToken, w));
 }
 
+// חיפוש לפי מראה מקום ("רשב"א עירובין סט:", "עירובין דף סט ע"ב", "תוספות עירובין סט"): מפרקים גם את
+// החיפוש וגם כל מיקום שזוהה למילים מנורמלות (בלי גרשיים, בלי "דף"/"על"/"עמוד"), והעמוד הופך לסימן אחיד
+function refSearchTokens(str) {
+ let t = ' ' + String(str || '') + ' ';
+ t = t.replace(/(^|\s)ע["״'׳]?א(?=\s|$)/g, ' . ').replace(/(^|\s)ע["״'׳]?ב(?=\s|$)/g, ' : ');
+ t = t.replace(/([^\s.:])([.:])(?=\s|$)/g, '$1 $2');
+ t = t.replace(/["״'׳]/g, '');
+ const words = t.split(/[\s,\-–—|()]+/).filter(Boolean).filter(w => !['דף', 'על', 'עמוד', 'עמ', 'דה', 'מסכת', 'בדף'].includes(w));
+ return words.map(w => w === 'א' ? '.' : w === 'ב' ? ':' : w);
+}
+function noteRefMatchesQuery(note, q) {
+ const qt = refSearchTokens(q);
+ if (!qt.length || !(note.refs || []).length) return false;
+ return note.refs.some(r => {
+ const rt = refSearchTokens(formatRef(r) + (r.amud ? (r.amud === 'ב' ? ' :' : ' .') : ''));
+ return qt.every(w => rt.some(x => x === w || (w.length >= 3 && x.length >= 3 && normalizeHebrewForSearch(x) === normalizeHebrewForSearch(w))));
+ });
+}
 function noteMatchesQuery(note, q, mode, scope) {
  mode = mode || 'smart';
  scope = scope || 'all';
  const tokens = getSearchTokens(q);
  if (!tokens.length) return true;
+ if ((scope === 'all' || scope === 'location') && noteRefMatchesQuery(note, q)) return true;
  const haystacks = fieldsForScope(note, scope).map(h => escapeHtml(h || ''));
  // בחיפוש ממוקד לפי שדה (לא "הכל") דורשים התאמת מילה שלמה, כדי ש"עירוב"לא יתאים בטעות בתוך "עירובין"
  const regexBuilder = scope === 'all' ? buildFlexibleRegex : buildWholeWordRegex;
@@ -3909,6 +3929,7 @@ function renderLibrary() {
  const dist = distInput ? (parseInt(distInput.value, 10) || 20) : 20;
  rangeMap = new Map();
  matched = base.filter(n => {
+ if ((scope === 'all' || scope === 'location') && noteRefMatchesQuery(n, q)) return true;
  const result = tokensWithinProximity(n, tokens, dist, scope);
  if (result.matched) { rangeMap.set(n.id, result.range); return true; }
  return false;
@@ -4080,7 +4101,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.5.5';
+const APP_VERSION = '1.5.6';
 const APP_VERSION_DATE = '04.11.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
