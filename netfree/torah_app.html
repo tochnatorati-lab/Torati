@@ -1332,6 +1332,26 @@ let geminiActiveKeyIndex = 0;
 const GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
 let geminiSawOverload = false;
 const geminiDeadModels = new Set();
+let geminiModelsDiscovered = false;
+// שואל את גוגל אילו מודלים זמינים במפתח הזה (לא עולה מכסה), ומוסיף לרשימה את כל מודלי ה-flash
+// (כולל lite) מהחדש לישן - כך שכשמודל אחד עמוס יש עוד הרבה חלופות לעבור אליהן מיד
+async function discoverGeminiModels(key) {
+ if (geminiModelsDiscovered) return;
+ geminiModelsDiscovered = true;
+ try {
+ const r = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(key)}`, {}, 8000);
+ if (!r.ok) return;
+ const d = await r.json();
+ const names = (d.models || [])
+ .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+ .map(m => String(m.name || '').replace(/^models\//, ''))
+ .filter(n => /^gemini-/.test(n) && /flash/.test(n) && !/tts|image|audio|live|embed|thinking|robotics|computer/.test(n));
+ const ver = n => { const m = n.match(/gemini-(\d+(?:\.\d+)?)/); return m ? parseFloat(m[1]) : 0; };
+ const rank = n => (/preview|exp/.test(n) ? 2 : 0) + (/lite/.test(n) ? 1 : 0);
+ names.sort((a, b) => rank(a) - rank(b) || ver(b) - ver(a));
+ names.forEach(n => { if (!GEMINI_MODELS.includes(n) && !geminiDeadModels.has(n)) GEMINI_MODELS.push(n); });
+ } catch (e) { /* לא קריטי - נשארים עם הרשימה הקבועה */ }
+}
 let geminiModelIndex = 0;
 let geminiLastError = '';
 
@@ -1838,7 +1858,7 @@ async function callGeminiRaw(key, prompt, generationConfig, retryCount, triedKey
  const nextModel = (why) => {
  geminiModelIndex = (geminiModelIndex + 1) % GEMINI_MODELS.length;
  say(`🔁 ${why} - עובר למודל חלופי (${GEMINI_MODELS[geminiModelIndex]})...`);
- return callGeminiRaw(key, prompt, generationConfig, 0, 0, triedModels + 1);
+ return callGeminiRaw(key, prompt, generationConfig, retryCount, 0, triedModels + 1);
  };
  // מפתח לא תקין - זו לא "עומס". מנסים את המפתח השני, ואם אין - מסבירים בדיוק מה הבעיה
  if (isBadKey) {
@@ -1847,6 +1867,7 @@ async function callGeminiRaw(key, prompt, generationConfig, retryCount, triedKey
  }
  // המודל הוסר - מוציאים אותו מהרשימה, ואם גוגל ממליצה על מודל אחר ("use models/X") - מנסים אותו
  if (isNoModel) {
+ if (!geminiModelsDiscovered) await discoverGeminiModels(key);
  const suggested = (errMsg.match(/use models\/([\w.\-]+)/i) || [])[1];
  const dead = GEMINI_MODELS[geminiModelIndex];
  geminiDeadModels.add(dead);
@@ -1862,22 +1883,26 @@ async function callGeminiRaw(key, prompt, generationConfig, retryCount, triedKey
  }
  if (isHardQuota) {
  if (moreKeys) return nextKey('המכסה במפתח הזה נגמרה');
- if (moreModels) return nextModel('המכסה של המודל הזה נגמרה');
+ if (!geminiModelsDiscovered) await discoverGeminiModels(key);
+ if (triedModels < GEMINI_MODELS.length - 1) return nextModel('המכסה של המודל הזה נגמרה');
  throw new Error('המכסה החינמית של מפתח ה-API נגמרה' + (allKeys.length > 1 ? ' (בשני המפתחות)' : '') + ', בכל המודלים. היא מתחדשת לבד מחר. אפשר להוסיף מפתח נוסף בהגדרות.\n\nהתשובה של גוגל: ' + errMsg);
  }
- // עומס על המודל אצל גוגל (לא קשור למפתחות שלכם): ניסיון חוזר אחד, ואז מודל חלופי
+ // עומס על המודל אצל גוגל (לא קשור למפתחות שלכם): בלי לחכות - עוברים מיד למודל אחר.
+ // רק אחרי שכל המודלים נוסו - ניסיון אחד נוסף אחרי 4 שניות, ואז מפסיקים
  if (isOverloaded) {
  geminiSawOverload = true;
+ if (!geminiModelsDiscovered) { await discoverGeminiModels(key); }
+ if (triedModels < GEMINI_MODELS.length - 1) return nextModel('המודל של גוגל עמוס');
  if (retryCount < 1) {
- say('⏳ השרתים של גוגל עמוסים כרגע (לא בעיה במפתח שלכם) - מנסה שוב בעוד 5 שניות...');
- await new Promise(r => setTimeout(r, 5000));
- return callGeminiRaw(key, prompt, generationConfig, retryCount + 1, triedKeys, triedModels);
+ say('⏳ כל המודלים של גוגל עמוסים כרגע - ניסיון אחרון בעוד 4 שניות...');
+ await new Promise(r => setTimeout(r, 4000));
+ geminiModelIndex = 0;
+ return callGeminiRaw(key, prompt, generationConfig, retryCount + 1, 0, 0);
  }
- if (moreModels) return nextModel('המודל של גוגל עמוס');
  }
  // מכסת "בקשות לדקה" - מתאוששת תוך שניות. קודם מפתח שני, אחר כך המתנה לפי מה שגוגל אומרת
  if (isRateLimit && moreKeys) return nextKey('הגעתם למגבלת הבקשות לדקה במפתח הזה');
- if ((isRateLimit || isOverloaded) && retryCount < 4) {
+ if (isRateLimit && !isOverloaded && retryCount < 4) {
  let waitSeconds = isOverloaded ? 8 : 5;
  const match = errMsg.match(/retry in ([\d.]+)s/i);
  if (match) waitSeconds = parseFloat(match[1]);
@@ -1889,7 +1914,7 @@ async function callGeminiRaw(key, prompt, generationConfig, retryCount, triedKey
  return callGeminiRaw(key, prompt, generationConfig, retryCount + 1, 0, triedModels);
  }
  // נכשל סופית - מצרפים הסבר בעברית לתשובה של גוגל, כדי שיהיה ברור מה קרה
- const why = (isOverloaded || geminiSawOverload) ? 'השרתים של גוגל עמוסים מאוד כרגע (לא בעיה במפתח שלכם). נסו שוב בעוד כמה דקות.'
+ const why = (isOverloaded || geminiSawOverload) ? 'השרתים של גוגל עמוסים מאוד כרגע, בכל המודלים (לא בעיה במפתח שלכם). נסו שוב בעוד כמה דקות.'
  : isRateLimit ? 'הגעתם למגבלת הבקשות של גוגל. נסו שוב בעוד דקה.'
  : 'גוגל החזירה שגיאה.';
  data.error.message = `${why}\n\nהתשובה של גוגל (קוד ${res.status}): ${errMsg}`;
@@ -2091,7 +2116,9 @@ async function analyzeText() {
  }
 
  } catch (err) {
- alert('הניתוח לא הצליח:\n' + err.message + (/גוגל/.test(err.message) ? '' : '\n\nודאו שמפתח ה-API תקין (מתחיל ב-AIzaSy או ב-AQ.) ושהוא פעיל.'));
+ if (/עמוסים|מגבלת הבקשות/.test(err.message) && getEditorText().trim()) {
+ if (confirm('הניתוח לא הצליח:\n' + err.message + '\n\nלשמור את הטקסט כטיוטה, ולנתח אותו אחר כך בלחיצה אחת?')) saveDraft();
+ } else alert('הניתוח לא הצליח:\n' + err.message + (/גוגל/.test(err.message) ? '' : '\n\nודאו שמפתח ה-API תקין (מתחיל ב-AIzaSy או ב-AQ.) ושהוא פעיל.'));
  } finally {
  document.getElementById('loading').style.display = 'none';
  }
@@ -4052,7 +4079,7 @@ ${listText}
 // התוכנה (או מיד, בלחיצה על "הפעל מחדש עכשיו"). החידושים עצמם
 // שמורים ב-localStorage ולא בקבצים, ולכן לא נפגעים. אם התוכנה נפתחה בלי השרת (לחיצה כפולה על הקובץ),
 // מורידים את הקובץ החדש ומסבירים איך להחליף אותו.
-const APP_VERSION = '1.5.3';
+const APP_VERSION = '1.5.4';
 const APP_VERSION_DATE = '04.11.2026';
 const UPDATE_URL = 'https://raw.githubusercontent.com/tochnatorati-lab/torati/main/version.json';
 let pendingUpdateInfo = null;
